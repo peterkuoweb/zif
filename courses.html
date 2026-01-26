@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="zh-Hant" class="light">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>課程列表 - 智作坊</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet"/>
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: { "primary": "#137fec", "background-light": "#f6f7f8", "background-dark": "#101922" },
+                    fontFamily: { "sans": ["Noto Sans TC", "sans-serif"] },
+                },
+            },
+        }
+    </script>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen flex flex-col">
+
+    <header class="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-6 py-3 sticky top-0 z-50">
+        <div class="flex items-center gap-4">
+            <div class="size-8 bg-primary rounded-lg flex items-center justify-center text-white">
+                <span class="material-symbols-outlined">auto_awesome</span>
+            </div>
+            <h2 class="text-lg font-bold">智作坊</h2>
+        </div>
+        <div class="flex items-center gap-4">
+            <a href="index.html" class="text-sm font-medium hover:text-primary">回首頁</a>
+            <a href="student.html" class="text-sm font-medium hover:text-primary">我的儀表板</a>
+        </div>
+    </header>
+
+    <main class="flex-1 max-w-7xl w-full mx-auto px-6 py-8">
+        <div class="flex justify-between items-center mb-8">
+            <h1 class="text-2xl font-bold">所有課程</h1>
+
+            <div class="flex gap-2">
+                <button onclick="filterCourses('all')" class="filter-btn bg-primary text-white px-4 py-2 rounded-lg text-sm font-bold">全部</button>
+                <button onclick="filterCourses('video')" class="filter-btn bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-4 py-2 rounded-lg text-sm font-medium">影片</button>
+                <button onclick="filterCourses('pdf')" class="filter-btn bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-4 py-2 rounded-lg text-sm font-medium">講義</button>
+                <button onclick="filterCourses('practical')" class="filter-btn bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-4 py-2 rounded-lg text-sm font-medium">實作</button>
+            </div>
+        </div>
+
+        <div id="course-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <!-- Courses Loaded Here -->
+            <div class="col-span-full text-center py-20">
+                <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                <p class="mt-2 text-slate-500">載入課程中...</p>
+            </div>
+        </div>
+    </main>
+
+    <script type="module">
+        import { getCourses } from './js/db.js';
+
+        let allCourses = [];
+
+        async function init() {
+            allCourses = await getCourses();
+            renderCourses(allCourses);
+        }
+
+        function renderCourses(courses) {
+            const grid = document.getElementById('course-grid');
+            if (courses.length === 0) {
+                grid.innerHTML = '<p class="col-span-full text-center text-slate-500">暫無課程</p>';
+                return;
+            }
+
+            grid.innerHTML = courses.map(c => `
+                <div class="bg-white dark:bg-slate-900 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-md transition-shadow group flex flex-col">
+                    <div class="aspect-video bg-slate-100 dark:bg-slate-800 flex items-center justify-center relative overflow-hidden">
+                        <span class="material-symbols-outlined text-6xl text-slate-300 group-hover:scale-110 transition-transform">
+                            ${getIconForType(c.type)}
+                        </span>
+                        <div class="absolute top-2 right-2 bg-black/50 text-white text-xs px-2 py-1 rounded backdrop-blur-sm uppercase">
+                            ${c.type}
+                        </div>
+                    </div>
+                    <div class="p-5 flex-1 flex flex-col">
+                        <h3 class="font-bold text-lg mb-2 line-clamp-2">${c.title}</h3>
+                        <div class="mt-auto pt-4">
+                            <a href="course.html?id=${c.id}" class="w-full bg-primary text-white font-bold py-2 rounded-lg flex items-center justify-center gap-2 hover:bg-primary/90 transition-opacity">
+                                開始學習
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function getIconForType(type) {
+            switch(type) {
+                case 'video': return 'play_circle';
+                case 'pdf': return 'description';
+                case 'practical': return 'terminal';
+                case 'quiz': return 'quiz';
+                default: return 'school';
+            }
+        }
+
+        window.filterCourses = (type) => {
+            // Update UI
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('bg-primary', 'text-white');
+                btn.classList.add('bg-slate-200', 'dark:bg-slate-800', 'text-slate-700', 'dark:text-slate-300');
+            });
+            event.target.classList.remove('bg-slate-200', 'dark:bg-slate-800', 'text-slate-700', 'dark:text-slate-300');
+            event.target.classList.add('bg-primary', 'text-white');
+
+            if (type === 'all') renderCourses(allCourses);
+            else renderCourses(allCourses.filter(c => c.type === type));
+        };
+
+        init();
+    </script>
+</body>
+</html>

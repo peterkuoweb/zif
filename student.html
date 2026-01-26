@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="zh-Hant" class="light">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>學生儀表板 - 智作坊</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: { "primary": "#137fec", "background-light": "#f6f7f8", "background-dark": "#101922" },
+                    fontFamily: { "sans": ["Inter", "Noto Sans TC", "sans-serif"] },
+                },
+            },
+        }
+    </script>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 font-sans min-h-screen flex flex-col">
+
+    <header class="h-16 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center justify-between px-8 sticky top-0 z-10">
+        <div class="flex items-center gap-2">
+            <span class="material-symbols-outlined text-primary text-2xl">school</span>
+            <h2 class="text-lg font-bold">智作坊 學生中心</h2>
+        </div>
+        <div class="flex items-center gap-4">
+            <a href="courses.html" class="text-sm font-medium hover:text-primary">瀏覽課程</a>
+            <div class="h-8 w-px bg-slate-200 dark:bg-slate-700"></div>
+            <span class="text-sm font-bold" id="header-user-name">Student</span>
+            <button id="logout-btn" class="text-sm text-red-500 hover:underline">登出</button>
+        </div>
+    </header>
+
+    <main class="flex-1 max-w-6xl w-full mx-auto p-8 space-y-10">
+
+        <!-- My Classes -->
+        <section>
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold">我的班級</h2>
+                <button onclick="document.getElementById('join-class-modal').classList.remove('hidden')" class="text-primary text-sm font-bold flex items-center gap-1 hover:underline">
+                    <span class="material-symbols-outlined text-sm">add</span> 加入班級
+                </button>
+            </div>
+            <div id="my-classes" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Loaded via JS -->
+                <div class="col-span-full text-center py-10 text-slate-400 bg-white dark:bg-slate-900 rounded-xl border border-dashed border-slate-300 dark:border-slate-700">
+                    尚無加入的班級
+                </div>
+            </div>
+        </section>
+
+        <!-- My Courses / Progress -->
+        <section>
+            <h2 class="text-2xl font-bold mb-6">學習進度</h2>
+            <div id="my-courses" class="space-y-4">
+                <!-- Loaded via JS -->
+            </div>
+        </section>
+
+        <!-- Settings -->
+        <section class="bg-white dark:bg-slate-900 p-8 rounded-xl border border-slate-200 dark:border-slate-800">
+            <h2 class="text-xl font-bold mb-6">個人設定</h2>
+            <form id="settings-form" class="max-w-md space-y-4">
+                <div>
+                    <label class="block text-sm font-bold mb-2">顯示名稱</label>
+                    <input id="setting-name" type="text" class="w-full rounded-lg border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-3">
+                </div>
+                <div>
+                    <label class="block text-sm font-bold mb-2">新密碼 (選填)</label>
+                    <input id="setting-password" type="password" class="w-full rounded-lg border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-3" placeholder="若不修改請留空">
+                </div>
+                <button type="submit" class="bg-primary text-white px-6 py-2 rounded-lg font-bold hover:bg-primary/90">儲存變更</button>
+            </form>
+        </section>
+    </main>
+
+    <!-- Join Class Modal -->
+    <div id="join-class-modal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center z-50">
+        <div class="bg-white dark:bg-slate-900 rounded-xl p-6 w-full max-w-sm shadow-2xl relative">
+            <button onclick="document.getElementById('join-class-modal').classList.add('hidden')" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600"><span class="material-symbols-outlined">close</span></button>
+            <h3 class="text-xl font-bold mb-4">加入班級</h3>
+            <div class="space-y-4">
+                <input id="class-code-input" type="text" placeholder="輸入班級代碼 (6位)" class="w-full rounded-lg border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-3 text-center text-lg tracking-widest uppercase">
+                <button id="join-class-btn" class="w-full bg-primary text-white py-3 rounded-lg font-bold hover:bg-primary/90">加入</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { getCurrentUser, logoutUser, dbInstance, authInstance } from './js/auth.js';
+        import { getClassesForStudent, joinClass, getUserProgress, getCourses } from './js/db.js';
+
+        let currentUser;
+
+        async function init() {
+            currentUser = await getCurrentUser();
+            if (!currentUser) return location.href = 'login.html';
+            if (currentUser.role === 'admin' || currentUser.role === 'teacher') return location.href = 'admin.html';
+
+            document.getElementById('header-user-name').textContent = currentUser.name;
+            document.getElementById('setting-name').value = currentUser.name;
+
+            document.getElementById('logout-btn').addEventListener('click', logoutUser);
+
+            loadClasses();
+            loadProgress();
+
+            // Settings
+            document.getElementById('settings-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const name = document.getElementById('setting-name').value;
+                const password = document.getElementById('setting-password').value;
+
+                // Update implementation depends on mock vs real.
+                // Simplified here:
+                alert("Settings updated (Simulation)");
+                // In real app, call updateProfile/updatePassword on authInstance and update db doc.
+            });
+
+            // Join Class
+            document.getElementById('join-class-btn').addEventListener('click', async () => {
+                const code = document.getElementById('class-code-input').value.trim().toUpperCase();
+                if (!code) return;
+                try {
+                    await joinClass(currentUser.uid, code);
+                    alert("Successfully joined class!");
+                    document.getElementById('join-class-modal').classList.add('hidden');
+                    loadClasses();
+                } catch (e) {
+                    alert(e.message);
+                }
+            });
+        }
+
+        async function loadClasses() {
+            const classes = await getClassesForStudent(currentUser.uid);
+            const container = document.getElementById('my-classes');
+            if (classes.length === 0) return; // Keep default msg
+
+            container.innerHTML = classes.map(c => `
+                <div class="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+                    <h3 class="font-bold text-lg text-primary">${c.name}</h3>
+                    <p class="text-slate-500 text-sm">Code: ${c.code}</p>
+                    <p class="text-slate-500 text-sm mt-2">Assignments: ${c.assignments.length}</p>
+                </div>
+            `).join('');
+        }
+
+        async function loadProgress() {
+            const courses = await getCourses();
+            const progressList = await getUserProgress(currentUser.uid);
+            // We want to show courses user has interacted with or assigned
+            // For MVP, just show all courses with progress
+
+            const container = document.getElementById('my-courses');
+            container.innerHTML = courses.map(course => {
+                const p = progressList.find(prog => prog.courseId === course.id);
+                const status = p ? (p.status === 'completed' ? '已完成' : '進行中') : '未開始';
+                const color = p && p.status === 'completed' ? 'text-green-500' : (p ? 'text-primary' : 'text-slate-400');
+
+                return `
+                    <div class="flex items-center justify-between bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800">
+                        <div>
+                            <h4 class="font-bold">${course.title}</h4>
+                            <span class="text-xs bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded text-slate-500">${course.type.toUpperCase()}</span>
+                        </div>
+                        <div class="flex items-center gap-4">
+                            <span class="text-sm font-bold ${color}">${status}</span>
+                            <a href="course.html?id=${course.id}" class="text-sm border border-slate-200 dark:border-slate-700 px-3 py-1.5 rounded hover:bg-slate-50 dark:hover:bg-slate-800">前往</a>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        init();
+    </script>
+</body>
+</html>
