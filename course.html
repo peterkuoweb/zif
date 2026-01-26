@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="zh-Hant" class="light">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>課程學習 - 智作坊</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: { colors: { "primary": "#137fec", "background-light": "#f6f7f8", "background-dark": "#101922" } },
+            },
+        }
+    </script>
+    <style>
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen flex flex-col">
+
+    <header class="h-16 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center justify-between px-6 sticky top-0 z-50">
+        <div class="flex items-center gap-4">
+            <a href="courses.html" class="flex items-center gap-2 text-slate-500 hover:text-primary">
+                <span class="material-symbols-outlined">arrow_back</span>
+                <span>返回列表</span>
+            </a>
+            <div class="h-6 w-px bg-slate-200 dark:bg-slate-700"></div>
+            <h1 class="font-bold text-lg truncate max-w-md" id="course-title">載入中...</h1>
+        </div>
+        <div class="flex items-center gap-4">
+            <div class="flex flex-col items-end">
+                <span class="text-xs text-slate-500">課程進度</span>
+                <span class="text-sm font-bold text-primary" id="progress-text">0%</span>
+            </div>
+            <div class="w-24 h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                <div id="progress-bar" class="h-full bg-primary w-0 transition-all duration-500"></div>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-1 flex flex-col lg:flex-row h-[calc(100vh-64px)] overflow-hidden">
+        <!-- Content Player -->
+        <div class="flex-1 bg-black relative flex items-center justify-center overflow-hidden" id="player-container">
+            <div class="text-white flex flex-col items-center">
+                <span class="material-symbols-outlined text-4xl animate-spin mb-4">progress_activity</span>
+                <p>載入教材中...</p>
+            </div>
+        </div>
+
+        <!-- Sidebar / Task Panel -->
+        <aside class="w-full lg:w-96 bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 flex flex-col h-1/2 lg:h-full overflow-y-auto custom-scrollbar">
+            <div class="p-6 border-b border-slate-200 dark:border-slate-800">
+                <div class="flex items-center gap-2 mb-2">
+                    <span class="text-xs font-bold uppercase px-2 py-1 rounded bg-slate-100 dark:bg-slate-800 text-slate-500" id="course-type">Type</span>
+                </div>
+                <h2 class="text-xl font-bold mb-4">學習任務</h2>
+                <p class="text-sm text-slate-500 leading-relaxed" id="course-desc">...</p>
+            </div>
+
+            <div class="flex-1 p-6" id="action-area">
+                <!-- Dynamic Controls based on Type -->
+            </div>
+
+            <div class="p-6 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50">
+                <button id="complete-btn" class="w-full h-12 rounded-lg bg-slate-200 text-slate-400 font-bold flex items-center justify-center gap-2 cursor-not-allowed transition-all" disabled>
+                    <span>完成單元</span>
+                    <span class="material-symbols-outlined text-sm">lock</span>
+                </button>
+            </div>
+        </aside>
+    </main>
+
+    <script type="module" src="js/course.js"></script>
+    <script src="https://www.youtube.com/iframe_api"></script>
+</body>
+</html>

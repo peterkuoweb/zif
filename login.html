@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="zh-Hant" class="light">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>登入與註冊 - 智作坊 (ZIF)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#137fec",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101922",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "Noto Sans TC", "sans-serif"],
+                        "sans": ["Inter", "Noto Sans TC", "sans-serif"]
+                    },
+                },
+            },
+        }
+    </script>
+</head>
+<body class="bg-background-light dark:bg-background-dark min-h-screen font-display transition-colors duration-300">
+    <div class="flex min-h-screen w-full">
+        <!-- Left Side: Banner -->
+        <div class="hidden lg:flex lg:w-1/2 relative flex-col justify-center items-center bg-primary p-12 overflow-hidden">
+            <div class="absolute inset-0 opacity-20">
+                <div class="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-white blur-[120px]"></div>
+                <div class="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-white blur-[120px]"></div>
+            </div>
+            <div class="relative z-10 max-w-lg text-center">
+                <h1 class="text-4xl font-black text-white leading-tight tracking-tight mb-4">
+                    智作坊 ZIF
+                </h1>
+                <p class="text-white/80 text-lg font-normal mb-8">
+                    加入我們，開啟您的 AI 學習之旅。
+                </p>
+                <img src="logo.png" alt="ZIF Logo" class="w-32 h-32 mx-auto rounded-full bg-white p-2">
+            </div>
+        </div>
+
+        <!-- Right Side: Form -->
+        <div class="w-full lg:w-1/2 flex flex-col justify-center px-6 sm:px-12 lg:px-24 py-12 bg-background-light dark:bg-background-dark">
+            <div class="max-w-[480px] w-full mx-auto">
+                <div class="mb-10 flex flex-col items-start">
+                    <div class="flex items-center gap-2 mb-8">
+                        <div class="size-8 text-primary flex items-center justify-center font-bold text-2xl">
+                            ZIF
+                        </div>
+                        <span class="text-xl font-bold tracking-tight text-[#0d141b] dark:text-slate-50">智作坊</span>
+                    </div>
+                    <h2 class="text-3xl font-bold text-[#0d141b] dark:text-slate-50 mb-2" id="form-title">歡迎回來</h2>
+                    <p class="text-[#4c739a] dark:text-slate-400">請輸入您的帳號資訊。</p>
+                </div>
+
+                <!-- Toggle Login/Register -->
+                <div class="flex gap-4 mb-6 border-b border-gray-200 dark:border-gray-700">
+                    <button id="tab-login" class="pb-2 px-4 font-bold text-primary border-b-2 border-primary">登入</button>
+                    <button id="tab-register" class="pb-2 px-4 font-bold text-gray-500 dark:text-gray-400 hover:text-primary">註冊</button>
+                </div>
+
+                <form id="auth-form" class="space-y-5">
+                    <div id="role-select-container" class="hidden flex flex-col gap-2">
+                        <label class="text-[#0d141b] dark:text-slate-200 text-sm font-semibold">身分</label>
+                        <select id="role" class="flex w-full rounded-lg border border-[#cfdbe7] dark:border-slate-700 bg-white dark:bg-slate-800 h-14 px-4 py-3 text-base">
+                            <option value="student">學生 (Student)</option>
+                            <option value="teacher">老師 (Teacher)</option>
+                        </select>
+                    </div>
+
+                    <div class="flex flex-col gap-2">
+                        <label class="text-[#0d141b] dark:text-slate-200 text-sm font-semibold">電子郵件</label>
+                        <input id="email" class="flex w-full rounded-lg border border-[#cfdbe7] dark:border-slate-700 bg-white dark:bg-slate-800 h-14 px-4 py-3 text-base focus:ring-2 focus:ring-primary" placeholder="name@example.com" type="email" required/>
+                    </div>
+
+                    <div class="flex flex-col gap-2">
+                        <label class="text-[#0d141b] dark:text-slate-200 text-sm font-semibold">密碼</label>
+                        <input id="password" class="flex w-full rounded-lg border border-[#cfdbe7] dark:border-slate-700 bg-white dark:bg-slate-800 h-14 px-4 py-3 text-base focus:ring-2 focus:ring-primary" placeholder="請輸入密碼" type="password" required/>
+                    </div>
+
+                    <button type="submit" id="submit-btn" class="w-full flex items-center justify-center rounded-lg h-14 bg-primary text-white text-base font-bold shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all">
+                        登入
+                    </button>
+
+                    <div class="relative flex py-4 items-center">
+                        <div class="flex-grow border-t border-[#cfdbe7] dark:border-slate-700"></div>
+                        <span class="flex-shrink mx-4 text-[#4c739a] dark:text-slate-400 text-sm">或透過以下方式</span>
+                        <div class="flex-grow border-t border-[#cfdbe7] dark:border-slate-700"></div>
+                    </div>
+
+                    <button type="button" id="google-login-btn" class="w-full flex items-center justify-center gap-3 rounded-lg h-14 border border-[#cfdbe7] dark:border-slate-700 bg-white dark:bg-slate-800 text-[#0d141b] dark:text-slate-50 font-semibold hover:bg-slate-50 dark:hover:bg-slate-700 transition-all">
+                        <svg class="w-5 h-5" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"></path><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"></path><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"></path><path d="M12 5.38c1.62 0 3.06.56 4.21 1.66l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"></path></svg>
+                        <span>使用 Google 帳號 (模擬)</span>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { loginUser, registerUser, getCurrentUser } from './js/auth.js';
+
+        const tabLogin = document.getElementById('tab-login');
+        const tabRegister = document.getElementById('tab-register');
+        const formTitle = document.getElementById('form-title');
+        const submitBtn = document.getElementById('submit-btn');
+        const roleSelect = document.getElementById('role-select-container');
+        const authForm = document.getElementById('auth-form');
+
+        let isLogin = true;
+
+        // Check if already logged in
+        getCurrentUser().then(user => {
+            if (user) {
+                if (user.role === 'admin') window.location.href = 'admin.html';
+                else if (user.role === 'teacher') window.location.href = 'admin.html'; // Teachers also use admin panel (simplified) or separate? User said "Backstage"
+                else window.location.href = 'student.html';
+            }
+        });
+
+        function toggleTab(login) {
+            isLogin = login;
+            if (login) {
+                tabLogin.classList.add('text-primary', 'border-b-2', 'border-primary');
+                tabLogin.classList.remove('text-gray-500', 'dark:text-gray-400');
+                tabRegister.classList.remove('text-primary', 'border-b-2', 'border-primary');
+                tabRegister.classList.add('text-gray-500', 'dark:text-gray-400');
+
+                formTitle.textContent = "歡迎回來";
+                submitBtn.textContent = "登入";
+                roleSelect.classList.add('hidden');
+            } else {
+                tabRegister.classList.add('text-primary', 'border-b-2', 'border-primary');
+                tabRegister.classList.remove('text-gray-500', 'dark:text-gray-400');
+                tabLogin.classList.remove('text-primary', 'border-b-2', 'border-primary');
+                tabLogin.classList.add('text-gray-500', 'dark:text-gray-400');
+
+                formTitle.textContent = "建立新帳號";
+                submitBtn.textContent = "註冊";
+                roleSelect.classList.remove('hidden');
+            }
+        }
+
+        tabLogin.addEventListener('click', () => toggleTab(true));
+        tabRegister.addEventListener('click', () => toggleTab(false));
+
+        authForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const role = document.getElementById('role').value;
+
+            try {
+                let user;
+                if (isLogin) {
+                    user = await loginUser(email, password);
+                } else {
+                    user = await registerUser(email, password, role);
+                }
+
+                // Fetch full user data to check role
+                const fullUser = await getCurrentUser();
+
+                if (fullUser.role === 'admin' || fullUser.role === 'teacher') {
+                    window.location.href = 'admin.html';
+                } else {
+                    window.location.href = 'student.html';
+                }
+
+            } catch (error) {
+                alert(error.message);
+            }
+        });
+
+        document.getElementById('google-login-btn').addEventListener('click', async () => {
+             // Simulating Google Login
+             const random = Math.floor(Math.random() * 1000);
+             const email = `google_user_${random}@gmail.com`;
+             const password = 'password';
+             try {
+                 // Try login or register
+                 try {
+                     await loginUser(email, password);
+                 } catch (e) {
+                     await registerUser(email, password, 'student', `Google User ${random}`);
+                 }
+                 window.location.href = 'student.html';
+             } catch (err) {
+                 alert(err.message);
+             }
+        });
+    </script>
+</body>
+</html>

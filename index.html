@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="zh-Hant" class="light">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>智作坊 ZIF - 首頁</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet"/>
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#137fec",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101922",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "Noto Sans TC", "sans-serif"],
+                        "sans": ["Inter", "Noto Sans TC", "sans-serif"]
+                    },
+                },
+            },
+        }
+    </script>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-[#0d141b] dark:text-slate-50 min-h-screen flex flex-col">
+
+    <!-- Header -->
+    <header class="flex items-center justify-between whitespace-nowrap border-b border-solid border-slate-200 dark:border-slate-800 px-10 py-3 bg-white/80 dark:bg-background-dark/80 backdrop-blur-md sticky top-0 z-50">
+        <div class="flex items-center gap-4 text-primary">
+            <div class="size-8 flex items-center justify-center">
+                <span class="material-symbols-outlined text-3xl">psychology</span>
+            </div>
+            <h2 class="text-[#0d141b] dark:text-white text-xl font-bold leading-tight tracking-[-0.015em]">智作坊</h2>
+        </div>
+        <div class="flex flex-1 justify-end gap-8">
+            <div class="hidden md:flex items-center gap-9">
+                <a class="text-[#0d141b] dark:text-slate-300 text-sm font-medium hover:text-primary transition-colors" href="courses.html">課程總覽</a>
+                <a class="text-[#0d141b] dark:text-slate-300 text-sm font-medium hover:text-primary transition-colors" href="#">學習社群</a>
+            </div>
+            <div class="flex gap-3" id="auth-buttons">
+                <!-- Injected via JS -->
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Hero -->
+    <main class="flex flex-col items-center flex-grow">
+        <div class="max-w-[1200px] w-full px-4 md:px-10">
+            <div class="flex flex-col gap-6 py-12 md:py-20 md:flex-row items-center">
+                <div class="flex flex-col gap-8 md:w-1/2">
+                    <div class="flex flex-col gap-4">
+                        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-bold uppercase tracking-wider w-fit">
+                            <span class="material-symbols-outlined text-sm">auto_awesome</span>
+                            最新課程：GPT-4o 大師班
+                        </div>
+                        <h1 class="text-[#0d141b] dark:text-white text-4xl font-black leading-tight tracking-[-0.033em] md:text-6xl">
+                            智作坊：您的 AI 技能加速器
+                        </h1>
+                        <p class="text-[#4c739a] dark:text-slate-400 text-lg font-normal leading-relaxed max-w-[500px]">
+                            提供掌握大型語言模型 (LLMs)、生成式藝術與 AI 驅動開發的完整學習路徑。
+                        </p>
+                    </div>
+                    <div class="flex flex-col sm:flex-row gap-4">
+                        <a href="courses.html" class="flex min-w-[200px] cursor-pointer items-center justify-center rounded-xl h-14 px-6 bg-primary text-white text-lg font-bold shadow-lg shadow-primary/25 hover:scale-[1.02] transition-transform">
+                            <span>開始學習 AI</span>
+                        </a>
+                    </div>
+                </div>
+                <div class="w-full md:w-1/2 relative">
+                    <div class="w-full bg-gradient-to-tr from-primary to-purple-600 aspect-video rounded-2xl shadow-2xl flex items-center justify-center overflow-hidden group">
+                         <span class="material-symbols-outlined text-white text-9xl opacity-50">model_training</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Course Highlights -->
+        <div class="max-w-[1200px] w-full px-4 md:px-10 py-10">
+            <h2 class="text-[#0d141b] dark:text-white text-3xl font-bold tracking-tight mb-8">探索熱門領域</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Card 1 -->
+                <div class="flex flex-col gap-4 p-6 bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 hover:border-primary/50 transition-all cursor-pointer" onclick="location.href='courses.html'">
+                    <div class="w-full bg-blue-50 dark:bg-blue-900/20 aspect-video rounded-xl flex items-center justify-center text-primary">
+                        <span class="material-symbols-outlined text-5xl">forum</span>
+                    </div>
+                    <h3 class="text-xl font-bold">大型語言模型</h3>
+                    <p class="text-slate-500 text-sm">提示工程、RAG 架構與微調。</p>
+                </div>
+                <!-- Card 2 -->
+                <div class="flex flex-col gap-4 p-6 bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 hover:border-primary/50 transition-all cursor-pointer" onclick="location.href='courses.html'">
+                    <div class="w-full bg-purple-50 dark:bg-purple-900/20 aspect-video rounded-xl flex items-center justify-center text-purple-500">
+                        <span class="material-symbols-outlined text-5xl">palette</span>
+                    </div>
+                    <h3 class="text-xl font-bold">AI 繪圖</h3>
+                    <p class="text-slate-500 text-sm">Midjourney, Stable Diffusion 實戰。</p>
+                </div>
+                <!-- Card 3 -->
+                <div class="flex flex-col gap-4 p-6 bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 hover:border-primary/50 transition-all cursor-pointer" onclick="location.href='courses.html'">
+                    <div class="w-full bg-emerald-50 dark:bg-emerald-900/20 aspect-video rounded-xl flex items-center justify-center text-emerald-500">
+                        <span class="material-symbols-outlined text-5xl">terminal</span>
+                    </div>
+                    <h3 class="text-xl font-bold">AI 輔助程式</h3>
+                    <p class="text-slate-500 text-sm">Copilot, Cursor 效率開發。</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="w-full py-10 border-t border-slate-200 dark:border-slate-800 text-center text-slate-400 text-sm">
+        <div class="max-w-[1200px] mx-auto px-10 flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-2 text-primary opacity-70 grayscale">
+                <span class="material-symbols-outlined">psychology</span>
+                <span class="font-bold">智作坊</span>
+            </div>
+            <p>© 2024 智作坊 版權所有。</p>
+            <!-- Hidden Admin Trigger -->
+            <div id="admin-trigger" class="w-2 h-2 rounded-full hover:bg-slate-200 cursor-default"></div>
+        </div>
+    </footer>
+
+    <script type="module">
+        import { getCurrentUser, logoutUser, tryPromoteToAdmin } from './js/auth.js';
+
+        const authContainer = document.getElementById('auth-buttons');
+        const adminTrigger = document.getElementById('admin-trigger');
+
+        // Check Auth
+        getCurrentUser().then(user => {
+            if (user) {
+                let dashboardLink = 'student.html';
+                if (user.role === 'admin' || user.role === 'teacher') {
+                    dashboardLink = 'admin.html';
+                }
+
+                authContainer.innerHTML = `
+                    <div class="flex items-center gap-4">
+                         <span class="text-sm font-bold text-slate-700 dark:text-slate-200 hidden md:inline">Hi, ${user.name || user.email}</span>
+                         <a href="${dashboardLink}" class="flex items-center justify-center rounded-lg h-10 px-4 bg-primary text-white text-sm font-bold hover:bg-blue-600 transition-all">
+                            進入後台
+                         </a>
+                         <button id="logout-btn" class="text-sm font-medium text-slate-500 hover:text-red-500">登出</button>
+                    </div>
+                `;
+
+                document.getElementById('logout-btn').addEventListener('click', logoutUser);
+            } else {
+                authContainer.innerHTML = `
+                    <a href="login.html" class="flex items-center justify-center rounded-lg h-10 px-4 bg-primary text-white text-sm font-bold hover:bg-blue-600 transition-all">
+                        登入 / 註冊
+                    </a>
+                `;
+            }
+        });
+
+        // Admin Trigger
+        adminTrigger.addEventListener('click', () => {
+            tryPromoteToAdmin();
+        });
+    </script>
+</body>
+</html>

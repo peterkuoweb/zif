@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="zh-Hant" class="light">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>管理後台 - 智作坊</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: { "primary": "#137fec", "background-light": "#f6f7f8", "background-dark": "#101922" },
+                    fontFamily: { "sans": ["Inter", "Noto Sans TC", "sans-serif"] },
+                },
+            },
+        }
+    </script>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 font-sans flex h-screen overflow-hidden">
+
+    <!-- Sidebar -->
+    <aside class="w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col">
+        <div class="p-6 flex items-center gap-3">
+            <div class="bg-primary rounded-lg p-1 text-white"><span class="material-symbols-outlined">neurology</span></div>
+            <h1 class="font-bold text-lg">智作坊 後台</h1>
+        </div>
+        <nav class="flex-1 px-4 space-y-2">
+            <button onclick="switchTab('users')" id="nav-users" class="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-left">
+                <span class="material-symbols-outlined">group</span> 使用者管理
+            </button>
+            <button onclick="switchTab('courses')" id="nav-courses" class="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-left">
+                <span class="material-symbols-outlined">book</span> 課程管理
+            </button>
+            <button onclick="switchTab('classes')" id="nav-classes" class="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-left">
+                <span class="material-symbols-outlined">school</span> 班級管理
+            </button>
+        </nav>
+        <div class="p-4 border-t border-slate-200 dark:border-slate-800">
+             <div class="flex items-center gap-3 mb-4">
+                <div class="size-8 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold" id="user-avatar">A</div>
+                <div class="overflow-hidden">
+                    <p class="text-sm font-bold truncate" id="user-name">Admin</p>
+                    <p class="text-xs text-slate-500 truncate" id="user-role">Super Admin</p>
+                </div>
+            </div>
+            <button id="logout-btn" class="w-full flex items-center justify-center gap-2 text-red-500 hover:bg-red-50 p-2 rounded-lg transition-colors">
+                <span class="material-symbols-outlined">logout</span> 登出
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col overflow-hidden">
+        <header class="h-16 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center justify-between px-8">
+            <h2 class="text-xl font-bold" id="page-title">使用者管理</h2>
+            <a href="index.html" class="text-sm text-primary hover:underline">返回首頁</a>
+        </header>
+
+        <div class="flex-1 overflow-y-auto p-8" id="content-area">
+            <!-- Dynamic Content Loaded Here -->
+        </div>
+    </main>
+
+    <!-- Modal Container -->
+    <div id="modal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50">
+        <div class="bg-white dark:bg-slate-900 rounded-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl relative">
+            <button onclick="closeModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600"><span class="material-symbols-outlined">close</span></button>
+            <h3 class="text-xl font-bold mb-4" id="modal-title">Title</h3>
+            <div id="modal-content"></div>
+        </div>
+    </div>
+
+    <!-- Templates -->
+    <template id="tmpl-users">
+        <div class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+            <table class="w-full text-left">
+                <thead class="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800">
+                    <tr>
+                        <th class="px-6 py-4 font-bold text-sm">Email</th>
+                        <th class="px-6 py-4 font-bold text-sm">Name</th>
+                        <th class="px-6 py-4 font-bold text-sm">Role</th>
+                        <th class="px-6 py-4 font-bold text-sm text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="user-list-body"></tbody>
+            </table>
+        </div>
+    </template>
+
+    <template id="tmpl-courses">
+        <div class="mb-6 flex justify-end">
+            <button onclick="openAddCourseModal()" class="bg-primary text-white px-4 py-2 rounded-lg font-bold flex items-center gap-2 hover:bg-blue-600">
+                <span class="material-symbols-outlined">add</span> 新增課程
+            </button>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="course-list"></div>
+    </template>
+
+    <template id="tmpl-classes">
+         <div class="mb-6 flex justify-end">
+            <button onclick="openCreateClassModal()" class="bg-primary text-white px-4 py-2 rounded-lg font-bold flex items-center gap-2 hover:bg-blue-600">
+                <span class="material-symbols-outlined">add</span> 建立班級
+            </button>
+        </div>
+        <div class="grid grid-cols-1 gap-4" id="class-list"></div>
+    </template>
+
+    <script type="module" src="js/admin.js"></script>
+    <script>
+        // Global helpers exposed for HTML onclick
+        window.switchTab = (tab) => document.dispatchEvent(new CustomEvent('switch-tab', { detail: tab }));
+        window.closeModal = () => document.getElementById('modal').classList.remove('flex');
+        window.openAddCourseModal = () => document.dispatchEvent(new CustomEvent('open-course-modal'));
+        window.openCreateClassModal = () => document.dispatchEvent(new CustomEvent('open-class-modal'));
+    </script>
+</body>
+</html>
