@@ -1,0 +1,2148 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Opensia</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Marked.js for Markdown -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+    <!-- Mermaid.js for Mind Maps -->
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+
+    <!-- Custom CSS -->
+    <style>/* Custom Scrollbar Styles */
+.custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+.custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+.custom-scrollbar::-webkit-scrollbar-thumb { background-color: rgba(156, 163, 175, 0.3); border-radius: 10px; }
+.custom-scrollbar::-webkit-scrollbar-thumb:hover { background-color: rgba(156, 163, 175, 0.5); }
+.transition-all { transition-property: all; transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1); transition-duration: 300ms; }
+.source-checkbox:checked + div { border-color: #4f46e5; background-color: #eef2ff; }
+.markdown-body { font-size: 1rem; line-height: 1.6; }
+.markdown-body p { margin-bottom: 0.75em; }
+.markdown-body h1, .markdown-body h2, .markdown-body h3, .markdown-body h4 { font-weight: 600; margin-top: 1em; margin-bottom: 0.5em; color: #1f2937; }
+.markdown-body h3 { font-size: 1.25em; }
+.markdown-body ul, .markdown-body ol { margin-left: 1.5em; margin-bottom: 0.75em; }
+.markdown-body ul { list-style-type: disc; }
+.markdown-body ol { list-style-type: decimal; }
+.markdown-body strong { font-weight: 600; color: #111827; }
+.markdown-body code { background-color: rgba(0,0,0,0.05); padding: 0.2em 0.4em; border-radius: 4px; font-family: ui-monospace, monospace; font-size: 0.85em; }
+.markdown-body pre code { display: block; padding: 1em; overflow-x: auto; background-color: #1e1e1e; color: #d4d4d4; border-radius: 8px; margin-bottom: 1em; }
+.provider-card { transition: all 0.2s ease-in-out; border: 2px solid transparent; }
+.provider-card:hover { transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); }
+.provider-card.selected { border-color: #4f46e5; background-color: #eef2ff; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+.chat-message { animation: fadeIn 0.3s ease-out forwards; }
+</style>
+</head>
+<body class="bg-gradient-to-br from-[#fdfbfb] to-[#ebedee] text-gray-800 font-sans h-screen overflow-hidden flex selection:bg-indigo-200">
+    <!-- Wrap everything in a glass container for desktop aesthetics -->
+    <div class="flex w-full h-full sm:p-4 md:p-6 lg:p-8">
+        <div class="flex w-full h-full bg-white/70 backdrop-blur-xl border border-white/50 shadow-2xl rounded-3xl overflow-hidden relative z-0">
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="fixed inset-0 bg-white/80 z-50 flex items-center justify-center hidden backdrop-blur-sm">
+        <div class="text-center">
+            <i class="fas fa-circle-notch fa-spin text-4xl text-indigo-600 mb-4"></i>
+            <p class="text-indigo-800 font-medium animate-pulse" id="loadingText">載入中...</p>
+        </div>
+    </div>
+
+    <!-- Setup Modal (First Time) -->
+    <div id="setupModal" class="fixed inset-0 bg-slate-900/40 z-50 flex items-center justify-center hidden backdrop-blur-md">
+        <div class="bg-white/90 backdrop-blur-3xl rounded-[2rem] shadow-2xl w-11/12 max-w-3xl overflow-hidden flex flex-col max-h-[90vh] border border-white/50">
+            <div class="p-8 border-b border-gray-100/50 flex justify-between items-center bg-indigo-50/30">
+                <h2 class="text-2xl font-bold text-indigo-900 flex items-center gap-3">
+                    <i class="fas fa-wand-magic-sparkles text-indigo-500"></i>
+                    歡迎來到 Opensia
+                </h2>
+                <div class="flex gap-2" id="setupStepIndicators">
+                    <div class="w-3 h-3 rounded-full bg-indigo-600"></div>
+                    <div class="w-3 h-3 rounded-full bg-gray-300"></div>
+                    <div class="w-3 h-3 rounded-full bg-gray-300"></div>
+                </div>
+            </div>
+
+            <div class="p-8 overflow-y-auto flex-grow" id="setupContent">
+                <!-- Step 1: Provider Selection -->
+                <div id="setupStep1" class="">
+                    <h3 class="text-xl font-semibold mb-6 text-gray-700">第一步：選擇 AI 模型供應商</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="providerCards">
+                        <!-- Provider cards injected here -->
+                    </div>
+                </div>
+
+                <!-- Step 2: API Key Input -->
+                <div id="setupStep2" class="hidden">
+                    <h3 class="text-xl font-semibold mb-6 text-gray-700">第二步：輸入 API 金鑰</h3>
+                    <p class="text-gray-500 mb-4" id="providerKeyHelp">請輸入您的 API 金鑰。我們只會將其安全地儲存在您的瀏覽器本地。</p>
+                    <div class="relative">
+                        <i class="fas fa-key absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                        <input type="password" id="apiKeyInput" class="w-full pl-12 pr-4 py-4 rounded-2xl border-2 border-indigo-100 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 transition-all outline-none text-lg" placeholder="sk-...">
+                    </div>
+                </div>
+
+                <!-- Step 3: Model Selection -->
+                <div id="setupStep3" class="hidden">
+                    <h3 class="text-xl font-semibold mb-6 text-gray-700">第三步：選擇 AI 模型</h3>
+                    <p class="text-gray-500 mb-4">我們已經抓取了可用的模型。請選擇一個：</p>
+                    <div class="relative">
+                        <i class="fas fa-brain absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                        <select id="modelSelect" class="w-full pl-12 pr-4 py-4 rounded-2xl border-2 border-indigo-100 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/20 transition-all outline-none text-lg appearance-none bg-white">
+                            <option value="">載入中...</option>
+                        </select>
+                        <i class="fas fa-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-6 border-t border-gray-100 bg-gray-50 flex justify-end gap-4 rounded-b-3xl">
+                <button id="setupPrevBtn" class="px-6 py-3 rounded-xl font-medium text-gray-600 hover:bg-gray-200 transition-colors hidden">返回</button>
+                <button id="setupNextBtn" class="px-8 py-3 rounded-xl font-medium bg-indigo-600 text-white hover:bg-indigo-700 shadow-lg shadow-indigo-600/30 transition-all transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed">下一步</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Modal (Standalone) -->
+    <div id="settingsModal" class="fixed inset-0 bg-slate-900/40 z-50 flex items-center justify-center hidden backdrop-blur-md">
+        <div class="bg-white/90 backdrop-blur-3xl rounded-[2rem] shadow-2xl w-11/12 max-w-2xl overflow-hidden flex flex-col border border-white/50">
+            <div class="p-6 border-b border-gray-100/50 flex justify-between items-center bg-indigo-50/30">
+                <h2 class="text-xl font-bold text-indigo-900 flex items-center gap-3">
+                    <i class="fas fa-cog text-indigo-500"></i>
+                    設定
+                </h2>
+                <button id="closeSettingsBtn" class="w-10 h-10 rounded-full hover:bg-white flex items-center justify-center text-gray-500 hover:text-red-500 transition-colors shadow-sm">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="p-8 overflow-y-auto space-y-6">
+                 <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">顯示語言</label>
+                    <select id="settingsLanguage" class="w-full p-3 rounded-xl border border-gray-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none">
+                        <option value="zh-TW">繁體中文</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">模型供應商</label>
+                    <select id="settingsProvider" class="w-full p-3 rounded-xl border border-gray-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none">
+                        <option value="openai">OpenAI</option>
+                        <option value="google">Google Gemini</option>
+                        <option value="groq">Groq</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">API 金鑰</label>
+                    <div class="flex gap-2">
+                         <input type="password" id="settingsApiKey" class="flex-grow p-3 rounded-xl border border-gray-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none">
+                         <button id="settingsRefreshModels" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-colors" title="重新抓取模型">
+                             <i class="fas fa-sync-alt"></i>
+                         </button>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">AI 模型</label>
+                    <select id="settingsModel" class="w-full p-3 rounded-xl border border-gray-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none">
+                    </select>
+                </div>
+            </div>
+            <div class="p-6 border-t border-gray-100 bg-gray-50 flex justify-end gap-4 rounded-b-3xl">
+                <button id="saveSettingsBtn" class="px-6 py-2.5 rounded-xl font-medium bg-indigo-600 text-white hover:bg-indigo-700 transition-colors shadow-md">儲存設定</button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Sidebar (File Explorer) -->
+    <aside class="w-72 bg-white/40 backdrop-blur-sm border-r border-white/60 flex flex-col z-10 flex-shrink-0 transition-all duration-300" id="sidebar">
+        <div class="p-6 border-b border-indigo-50 flex items-center justify-between">
+            <h1 class="text-2xl font-bold text-indigo-600 tracking-tight flex items-center gap-2">
+                <i class="fas fa-leaf"></i> Opensia
+            </h1>
+            <button id="openSettingsBtn" class="w-10 h-10 rounded-full hover:bg-indigo-50 flex items-center justify-center text-gray-400 hover:text-indigo-600 transition-colors" title="設定">
+                <i class="fas fa-cog"></i>
+            </button>
+        </div>
+
+        <div class="p-4 flex gap-2">
+            <button id="addFolderBtn" class="flex-1 py-2 px-3 bg-indigo-50 text-indigo-700 rounded-xl hover:bg-indigo-100 transition-colors font-medium text-sm flex items-center justify-center gap-2">
+                <i class="fas fa-folder-plus"></i> 資料夾
+            </button>
+            <button id="addNotebookBtn" class="flex-1 py-2 px-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors font-medium text-sm flex items-center justify-center gap-2 shadow-md shadow-indigo-600/20">
+                <i class="fas fa-book-medical"></i> 筆記本
+            </button>
+        </div>
+
+        <div class="flex-1 overflow-y-auto p-4 space-y-1 custom-scrollbar" id="fileExplorer">
+            <!-- Explorer items injected here -->
+        </div>
+    </aside>
+
+    <!-- Main Workspace (Hidden until notebook selected) -->
+    <main class="flex-1 flex flex-col bg-transparent hidden relative" id="mainWorkspace">
+
+        <!-- Top Bar -->
+        <header class="h-16 bg-white/50 backdrop-blur-md border-b border-white/60 flex items-center justify-between px-6 z-10">
+            <div class="flex items-center gap-4">
+                <button id="toggleSidebarBtn" class="w-10 h-10 rounded-xl hover:bg-indigo-50 flex items-center justify-center text-gray-500 transition-colors md:hidden">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <h2 id="currentNotebookTitle" class="text-xl font-semibold text-gray-800">未命名筆記本</h2>
+            </div>
+
+            <div class="flex gap-2">
+                <button class="lab-btn px-4 py-2 bg-amber-50 text-amber-700 rounded-xl hover:bg-amber-100 transition-colors font-medium text-sm flex items-center gap-2 border border-amber-200/50 shadow-sm" data-type="video">
+                    <i class="fas fa-film"></i> <span class="hidden sm:inline">影片解說</span>
+                </button>
+                <button class="lab-btn px-4 py-2 bg-emerald-50 text-emerald-700 rounded-xl hover:bg-emerald-100 transition-colors font-medium text-sm flex items-center gap-2 border border-emerald-200/50 shadow-sm" data-type="mindmap">
+                    <i class="fas fa-project-diagram"></i> <span class="hidden sm:inline">心智圖</span>
+                </button>
+                <button class="lab-btn px-4 py-2 bg-blue-50 text-blue-700 rounded-xl hover:bg-blue-100 transition-colors font-medium text-sm flex items-center gap-2 border border-blue-200/50 shadow-sm" data-type="podcast">
+                    <i class="fas fa-podcast"></i> <span class="hidden sm:inline">播客</span>
+                </button>
+                <button class="lab-btn px-4 py-2 bg-purple-50 text-purple-700 rounded-xl hover:bg-purple-100 transition-colors font-medium text-sm flex items-center gap-2 border border-purple-200/50 shadow-sm" data-type="presentation">
+                    <i class="fas fa-desktop"></i> <span class="hidden sm:inline">簡報</span>
+                </button>
+                <button class="lab-btn px-4 py-2 bg-rose-50 text-rose-700 rounded-xl hover:bg-rose-100 transition-colors font-medium text-sm flex items-center gap-2 border border-rose-200/50 shadow-sm" data-type="quiz">
+                    <i class="fas fa-question-circle"></i> <span class="hidden sm:inline">測驗</span>
+                </button>
+            </div>
+        </header>
+
+        <div class="flex-1 flex overflow-hidden">
+
+            <!-- Sources Panel (Left side of workspace) -->
+            <div class="w-80 bg-white/40 backdrop-blur-sm border-r border-white/60 flex flex-col z-0 transition-all" id="sourcesPanel">
+                <div class="p-4 border-b border-white/60 flex justify-between items-center bg-white/30">
+                    <h3 class="font-semibold text-gray-700 flex items-center gap-2">
+                        <i class="fas fa-database text-indigo-400"></i> 來源資料
+                    </h3>
+                    <label class="cursor-pointer w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center hover:bg-indigo-200 transition-colors shadow-sm" title="上傳文件">
+                        <i class="fas fa-plus"></i>
+                        <input type="file" id="uploadSourceInput" class="hidden" accept=".txt,.pdf,.md" multiple>
+                    </label>
+                </div>
+                <div class="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar" id="sourcesList">
+                    <!-- Sources injected here -->
+                    <div class="text-center text-gray-400 text-sm mt-10">
+                        <i class="fas fa-inbox text-3xl mb-2 opacity-50"></i>
+                        <p>尚無來源資料</p>
+                        <p class="text-xs mt-1">點擊上方 + 號上傳文件</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chat Area -->
+            <div class="flex-1 flex flex-col relative bg-transparent">
+
+                <div class="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar" id="chatHistory">
+                    <!-- Chat messages injected here -->
+                    <div class="flex items-center justify-center h-full opacity-50">
+                        <div class="text-center">
+                            <i class="fas fa-sparkles text-4xl text-indigo-300 mb-3"></i>
+                            <p class="text-gray-500">選擇來源並開始對話</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Chat Input Container -->
+                <div class="p-4 bg-white/50 backdrop-blur-md border-t border-white/60">
+                    <!-- Active Sources Indicator -->
+                    <div class="mb-2 px-2 flex flex-wrap gap-2" id="activeSourcesIndicator">
+                        <!-- Active sources tags injected here -->
+                    </div>
+
+                    <div class="relative bg-white rounded-3xl shadow-lg border border-indigo-50 focus-within:ring-4 focus-within:ring-indigo-500/20 focus-within:border-indigo-300 transition-all">
+                        <textarea id="chatInput" rows="1" class="w-full py-4 pl-6 pr-14 bg-transparent border-none outline-none resize-none max-h-32 custom-scrollbar text-gray-700" placeholder="詢問關於來源的任何問題..."></textarea>
+                        <button id="sendChatBtn" class="absolute right-2 bottom-2 w-10 h-10 rounded-2xl bg-indigo-600 text-white flex items-center justify-center hover:bg-indigo-700 transition-colors disabled:opacity-50 shadow-md">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Empty State -->
+    <main class="flex-1 flex items-center justify-center bg-transparent relative" id="emptyWorkspace">
+        <div class="text-center max-w-md p-8">
+            <div class="w-24 h-24 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner">
+                <i class="fas fa-book-open text-4xl text-indigo-500"></i>
+            </div>
+            <h2 class="text-2xl font-bold text-gray-800 mb-2">建立或選擇一個筆記本</h2>
+            <p class="text-gray-500 mb-8 leading-relaxed">在左側側邊欄創建一個新的筆記本，上傳您的文件，讓 Opensia 幫助您整理、摘要並產生多樣化的學習內容。</p>
+            <button onclick="document.getElementById('addNotebookBtn').click()" class="px-8 py-3 bg-indigo-600 text-white rounded-2xl font-medium hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-600/30 transform hover:-translate-y-1">
+                開始使用 <i class="fas fa-arrow-right ml-2"></i>
+            </button>
+        </div>
+    </main>
+
+
+    <!-- Lab Config Modal -->
+    <div id="labModal" class="fixed inset-0 bg-slate-900/40 z-50 flex items-center justify-center hidden backdrop-blur-md">
+        <div class="bg-white/90 backdrop-blur-3xl rounded-[2rem] shadow-2xl w-11/12 max-w-lg overflow-hidden flex flex-col border border-white/50">
+            <div class="p-6 border-b border-gray-100/50 flex justify-between items-center bg-indigo-50/30" id="labModalHeader">
+                <h2 class="text-xl font-bold flex items-center gap-3" id="labModalTitle">
+                    <i class="fas fa-flask"></i> 實驗室功能
+                </h2>
+                <button id="closeLabModalBtn" class="w-8 h-8 rounded-full hover:bg-gray-100 flex items-center justify-center text-gray-500 transition-colors">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="p-6 space-y-5" id="labModalBody">
+                <!-- Lab config fields injected here dynamically -->
+            </div>
+            <div class="p-6 border-t border-gray-100 bg-gray-50 flex justify-end gap-3">
+                <button id="cancelLabBtn" class="px-5 py-2.5 rounded-xl font-medium text-gray-600 hover:bg-gray-200 transition-colors">取消</button>
+                <button id="generateLabBtn" class="px-6 py-2.5 rounded-xl font-medium text-white transition-colors shadow-md flex items-center gap-2">
+                    <i class="fas fa-magic"></i> 產生
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lab Result Overlay -->
+    <div id="labResultOverlay" class="fixed inset-0 bg-white/95 backdrop-blur-3xl z-[60] flex flex-col hidden">
+        <div class="h-16 border-b border-gray-100/50 flex items-center justify-between px-6 bg-transparent">
+            <h2 class="text-xl font-bold text-gray-800" id="labResultTitle">產生結果</h2>
+            <button id="closeLabResultBtn" class="px-4 py-2 rounded-xl bg-white border border-gray-200 text-gray-600 hover:bg-gray-100 shadow-sm transition-colors flex items-center gap-2 font-medium">
+                <i class="fas fa-times"></i> 關閉
+            </button>
+        </div>
+        <div class="flex-1 overflow-auto p-8 bg-slate-50 relative" id="labResultContent">
+            <!-- Result content injected here -->
+        </div>
+    </div>
+
+    <!-- Scripts -->
+        </div>
+    </div>
+
+    <script>// js/db.js
+const DB_NAME = 'OpensiaDB';
+const DB_VERSION = 1;
+
+let db;
+
+/**
+ * Initializes the IndexedDB.
+ * Returns a promise that resolves when the DB is ready.
+ */
+function initDB() {
+    return new Promise((resolve, reject) => {
+        const request = indexedDB.open(DB_NAME, DB_VERSION);
+
+        request.onerror = (event) => {
+            console.error("Database error: ", event.target.error);
+            reject(event.target.error);
+        };
+
+        request.onsuccess = (event) => {
+            db = event.target.result;
+            resolve(db);
+        };
+
+        request.onupgradeneeded = (event) => {
+            const db = event.target.result;
+
+            // Store for settings
+            if (!db.objectStoreNames.contains('settings')) {
+                db.createObjectStore('settings', { keyPath: 'key' });
+            }
+
+            // Store for file explorer items (folders and notebooks)
+            if (!db.objectStoreNames.contains('items')) {
+                const itemsStore = db.createObjectStore('items', { keyPath: 'id' });
+                itemsStore.createIndex('parentId', 'parentId', { unique: false });
+                itemsStore.createIndex('type', 'type', { unique: false }); // 'folder' or 'notebook'
+            }
+
+            // Store for sources (files uploaded to a notebook)
+            if (!db.objectStoreNames.contains('sources')) {
+                const sourcesStore = db.createObjectStore('sources', { keyPath: 'id' });
+                sourcesStore.createIndex('notebookId', 'notebookId', { unique: false });
+            }
+
+            // Store for chat messages
+            if (!db.objectStoreNames.contains('messages')) {
+                const messagesStore = db.createObjectStore('messages', { keyPath: 'id' });
+                messagesStore.createIndex('notebookId', 'notebookId', { unique: false });
+            }
+        };
+    });
+}
+
+// --- Settings CRUD ---
+
+async function saveSetting(key, value) {
+    return new Promise((resolve, reject) => {
+        const transaction = db.transaction(['settings'], 'readwrite');
+        const store = transaction.objectStore('settings');
+        const request = store.put({ key, value });
+        request.onsuccess = () => resolve();
+        request.onerror = (e) => reject(e.target.error);
+    });
+}
+
+async function getSetting(key) {
+    return new Promise((resolve, reject) => {
+        const transaction = db.transaction(['settings'], 'readonly');
+        const store = transaction.objectStore('settings');
+        const request = store.get(key);
+        request.onsuccess = () => resolve(request.result ? request.result.value : null);
+        request.onerror = (e) => reject(e.target.error);
+    });
+}
+
+// --- Items (Folders/Notebooks) CRUD ---
+
+async function addItem(item) {
+    return new Promise((resolve, reject) => {
+        const transaction = db.transaction(['items'], 'readwrite');
+        const store = transaction.objectStore('items');
+        const request = store.add(item);
+        request.onsuccess = () => resolve(item);
+        request.onerror = (e) => reject(e.target.error);
+    });
+}
+
+async function updateItem(item) {
+    return new Promise((resolve, reject) => {
+        const transaction = db.transaction(['items'], 'readwrite');
+        const store = transaction.objectStore('items');
+        const request = store.put(item);
+        request.onsuccess = () => resolve(item);
+        request.onerror = (e) => reject(e.target.error);
+    });
+}
+
+async function getItems() {
+    return new Promise((resolve, reject) => {
+        const transaction = db.transaction(['items'], 'readonly');
+        const store = transaction.objectStore('items');
+        const request = store.getAll();
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = (e) => reject(e.target.error);
+    });
+}
+
+async function deleteItem(id) {
+    // Also recursively delete children if it's a folder, but for simplicity we'll just delete the item here.
+    // In a real app, you'd cascade deletes.
+    return new Promise((resolve, reject) => {
+        const transaction = db.transaction(['items'], 'readwrite');
+        const store = transaction.objectStore('items');
+        const request = store.delete(id);
+        request.onsuccess = () => resolve();
+        request.onerror = (e) => reject(e.target.error);
+    });
+}
+
+// --- Sources CRUD ---
+
+async function addSource(source) {
+    return new Promise((resolve, reject) => {
+        const transaction = db.transaction(['sources'], 'readwrite');
+        const store = transaction.objectStore('sources');
+        const request = store.add(source);
+        request.onsuccess = () => resolve(source);
+        request.onerror = (e) => reject(e.target.error);
+    });
+}
+
+async function getSourcesByNotebook(notebookId) {
+    return new Promise((resolve, reject) => {
+        const transaction = db.transaction(['sources'], 'readonly');
+        const store = transaction.objectStore('sources');
+        const index = store.index('notebookId');
+        const request = index.getAll(notebookId);
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = (e) => reject(e.target.error);
+    });
+}
+
+async function deleteSource(id) {
+    return new Promise((resolve, reject) => {
+        const transaction = db.transaction(['sources'], 'readwrite');
+        const store = transaction.objectStore('sources');
+        const request = store.delete(id);
+        request.onsuccess = () => resolve();
+        request.onerror = (e) => reject(e.target.error);
+    });
+}
+
+// --- Messages CRUD ---
+
+async function addMessage(message) {
+    return new Promise((resolve, reject) => {
+        const transaction = db.transaction(['messages'], 'readwrite');
+        const store = transaction.objectStore('messages');
+        const request = store.add(message);
+        request.onsuccess = () => resolve(message);
+        request.onerror = (e) => reject(e.target.error);
+    });
+}
+
+async function getMessagesByNotebook(notebookId) {
+    return new Promise((resolve, reject) => {
+        const transaction = db.transaction(['messages'], 'readonly');
+        const store = transaction.objectStore('messages');
+        const index = store.index('notebookId');
+        const request = index.getAll(notebookId);
+        request.onsuccess = () => {
+             // Sort messages by timestamp
+             const messages = request.result.sort((a, b) => a.timestamp - b.timestamp);
+             resolve(messages);
+        };
+        request.onerror = (e) => reject(e.target.error);
+    });
+}// js/ai.js
+
+// AI Provider configurations
+const providers = {
+    openai: {
+        name: 'OpenAI',
+        baseUrl: 'https://api.openai.com/v1',
+        modelsEndpoint: '/models',
+        chatEndpoint: '/chat/completions',
+        headers: (apiKey) => ({
+            'Authorization': `Bearer ${apiKey}`,
+            'Content-Type': 'application/json'
+        })
+    },
+    google: {
+        name: 'Google Gemini',
+        baseUrl: 'https://generativelanguage.googleapis.com/v1beta',
+        modelsEndpoint: '/models?key=',
+        chatEndpoint: (model, key) => `/models/${model}:generateContent?key=${key}`,
+        headers: () => ({
+            'Content-Type': 'application/json'
+        })
+    },
+    groq: {
+        name: 'Groq',
+        baseUrl: 'https://api.groq.com/openai/v1',
+        modelsEndpoint: '/models',
+        chatEndpoint: '/chat/completions',
+        headers: (apiKey) => ({
+            'Authorization': `Bearer ${apiKey}`,
+            'Content-Type': 'application/json'
+        })
+    }
+};
+
+/**
+ * Fetches available models for a given provider and API key.
+ */
+async function fetchModels(providerId, apiKey) {
+    const provider = providers[providerId];
+    if (!provider) throw new Error('未知的供應商');
+
+    try {
+        let url = provider.baseUrl + provider.modelsEndpoint;
+        let options = {
+            method: 'GET',
+            headers: provider.headers(apiKey)
+        };
+
+        if (providerId === 'google') {
+             url = provider.baseUrl + provider.modelsEndpoint + apiKey;
+        }
+
+        const response = await fetch(url, options);
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.error?.message || `HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        // Format the models list to a unified structure [{id, name}]
+        let models = [];
+        if (providerId === 'openai' || providerId === 'groq') {
+             models = data.data.map(m => ({ id: m.id, name: m.id }));
+             // Filter out non-chat models roughly for OpenAI
+             if (providerId === 'openai') {
+                 models = models.filter(m => m.id.includes('gpt'));
+             }
+        } else if (providerId === 'google') {
+             models = data.models
+                .filter(m => m.supportedGenerationMethods.includes('generateContent'))
+                .map(m => ({ id: m.name.replace('models/', ''), name: m.displayName || m.name.replace('models/', '') }));
+        }
+
+        return models;
+
+    } catch (error) {
+        console.error("Error fetching models:", error);
+        throw new Error(`無法獲取模型: ${error.message}`);
+    }
+}
+
+/**
+ * Sends a chat completion request to the AI provider.
+ */
+async function generateCompletion(providerId, apiKey, model, messages, systemPrompt = null) {
+     const provider = providers[providerId];
+     if (!provider) throw new Error('未知的供應商');
+
+     try {
+         if (providerId === 'openai' || providerId === 'groq') {
+             const apiMessages = [...messages];
+             if (systemPrompt) {
+                 apiMessages.unshift({ role: 'system', content: systemPrompt });
+             }
+
+             const response = await fetch(provider.baseUrl + provider.chatEndpoint, {
+                 method: 'POST',
+                 headers: provider.headers(apiKey),
+                 body: JSON.stringify({
+                     model: model,
+                     messages: apiMessages
+                 })
+             });
+
+             if (!response.ok) throw new Error(`API Error: ${response.status}`);
+             const data = await response.json();
+             return data.choices[0].message.content;
+
+         } else if (providerId === 'google') {
+             // Convert generic message format to Gemini format
+             let contents = messages.map(msg => ({
+                 role: msg.role === 'user' ? 'user' : 'model',
+                 parts: [{ text: msg.content }]
+             }));
+
+             const payload = { contents: contents };
+             if (systemPrompt) {
+                 // Gemini system instructions (supported on newer models)
+                 payload.systemInstruction = {
+                     parts: [{ text: systemPrompt }]
+                 };
+             }
+
+             const url = provider.baseUrl + provider.chatEndpoint(model, apiKey);
+             const response = await fetch(url, {
+                 method: 'POST',
+                 headers: provider.headers(),
+                 body: JSON.stringify(payload)
+             });
+
+             if (!response.ok) throw new Error(`API Error: ${response.status}`);
+             const data = await response.json();
+             return data.candidates[0].content.parts[0].text;
+         }
+
+     } catch (error) {
+         console.error("Error generating completion:", error);
+         throw new Error(`產生回應失敗: ${error.message}`);
+     }
+}
+
+/**
+ * Helper to process file content and generate a summary
+ */
+async function summarizeDocument(providerId, apiKey, model, text, filename) {
+    const systemPrompt = `你是一個專業的文件分析助手。你的任務是將使用者上傳的文件整理成純文字格式。
+
+重要指示：
+1. 請保留所有重要細節，這不是一個簡短的摘要，而是一個「結構化、詳細的文字轉換」。
+2. 絕對不能漏掉任何資訊，因為使用者未來會依靠這些文字來搜尋細節。
+3. 如果文件中有提到「頁碼」、「章節」、「條目」，請務必標示清楚（例如：[第5頁]、[第二章]）。
+4. 請使用 Markdown 格式來組織內容，使其易於閱讀（使用標題、列表、粗體等）。
+5. 盡可能保持原文的語氣和邏輯結構。`;
+
+    const prompt = `請整理以下名為「${filename}」的文件內容：
+
+${text.substring(0, 30000)}`; // Limit length basic
+
+    return await generateCompletion(providerId, apiKey, model, [{role: 'user', content: prompt}], systemPrompt);
+}// js/components.js
+
+// --- UI Rendering Functions ---
+
+function renderProviderCards(containerId, selectedProviderId = null, onSelect = null) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+
+    const providersData = [
+        {
+            id: 'openai',
+            name: 'OpenAI',
+            icon: 'fa-cube',
+            color: 'text-emerald-500',
+            bg: 'bg-emerald-50',
+            pros: ['最聰明、邏輯最強', '適合複雜任務'],
+            cons: ['需要付費', '速度可能較慢']
+        },
+        {
+            id: 'google',
+            name: 'Google Gemini',
+            icon: 'fa-google',
+            color: 'text-blue-500',
+            bg: 'bg-blue-50',
+            pros: ['多模態能力強', '免費額度較高'],
+            cons: ['有時會產生幻覺', 'API 格式較嚴格']
+        },
+        {
+            id: 'groq',
+            name: 'Groq',
+            icon: 'fa-bolt',
+            color: 'text-orange-500',
+            bg: 'bg-orange-50',
+            pros: ['生成速度極快', '開源模型選擇多'],
+            cons: ['不支援圖片', '複雜邏輯稍弱']
+        }
+    ];
+
+    container.innerHTML = '';
+
+    providersData.forEach(p => {
+        const card = document.createElement('div');
+        const isSelected = selectedProviderId === p.id;
+
+        card.className = `provider-card cursor-pointer rounded-3xl p-6 border-2 transition-all ${isSelected ? 'selected border-indigo-500 bg-white/80 shadow-lg' : 'border-gray-100/50 bg-white/40 hover:bg-white/60 hover:border-indigo-200'}`;
+        card.dataset.id = p.id;
+
+        card.innerHTML = `
+            <div class="flex items-center gap-4 mb-4">
+                <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-white to-${p.bg.split('-')[1]}-50 shadow-sm flex items-center justify-center">
+                    <i class="fab ${p.icon} text-3xl ${p.color}"></i>
+                </div>
+                <h4 class="text-xl font-bold text-gray-800">${p.name}</h4>
+                ${isSelected ? '<i class="fas fa-check-circle text-indigo-600 ml-auto text-2xl"></i>' : ''}
+            </div>
+            <div class="space-y-3">
+                <div>
+                    <span class="text-xs font-semibold text-emerald-600 uppercase tracking-wider mb-1 block">優點</span>
+                    <ul class="text-sm text-gray-600 space-y-1">
+                        ${p.pros.map(pro => `<li><i class="fas fa-check text-emerald-500 mr-2"></i>${pro}</li>`).join('')}
+                    </ul>
+                </div>
+                <div>
+                    <span class="text-xs font-semibold text-rose-600 uppercase tracking-wider mb-1 block">缺點</span>
+                    <ul class="text-sm text-gray-600 space-y-1">
+                        ${p.cons.map(con => `<li><i class="fas fa-times text-rose-500 mr-2"></i>${con}</li>`).join('')}
+                    </ul>
+                </div>
+            </div>
+        `;
+
+        if (onSelect) {
+            card.addEventListener('click', () => onSelect(p.id));
+        }
+
+        container.appendChild(card);
+    });
+}
+
+function renderExplorerItems(items, containerId, activeItemId, onFolderClick, onNotebookClick) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+
+    container.innerHTML = '';
+
+    if (items.length === 0) {
+        container.innerHTML = `
+            <div class="text-center text-gray-400 text-sm mt-8">
+                <i class="fas fa-folder-open text-2xl mb-2 opacity-50"></i>
+                <p>尚無資料</p>
+            </div>`;
+        return;
+    }
+
+    // Build tree map (for simplicity in this basic version, we just render flat,
+    // or group by parentId if implementing true nested folders)
+    // For this implementation, we render folders first, then notebooks.
+
+    const folders = items.filter(i => i.type === 'folder');
+    const notebooks = items.filter(i => i.type === 'notebook');
+
+    folders.forEach(folder => {
+        const el = document.createElement('div');
+        el.className = 'group flex items-center justify-between p-3 rounded-2xl hover:bg-white/50 cursor-pointer transition-all shadow-sm hover:shadow-md border border-transparent hover:border-white/60';
+        el.innerHTML = `
+            <div class="flex items-center gap-3 text-gray-700 font-medium">
+                <i class="fas fa-folder text-indigo-400 text-lg"></i>
+                <span class="truncate w-32">${folder.name}</span>
+            </div>
+            <button class="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 transition-opacity p-1" onclick="event.stopPropagation(); window.app.deleteItem('${folder.id}')">
+                <i class="fas fa-trash-alt text-xs"></i>
+            </button>
+        `;
+        el.onclick = () => onFolderClick(folder.id);
+        container.appendChild(el);
+    });
+
+    notebooks.forEach(notebook => {
+        const el = document.createElement('div');
+        const isActive = activeItemId === notebook.id;
+        el.className = `group flex items-center justify-between p-3 rounded-2xl cursor-pointer transition-all shadow-sm hover:shadow-md border ${isActive ? 'bg-white/80 border-indigo-200' : 'hover:bg-white/50 border-transparent hover:border-white/60'}`;
+        el.innerHTML = `
+            <div class="flex items-center gap-3 ${isActive ? 'text-indigo-700 font-bold' : 'text-gray-600 font-medium'}">
+                <i class="fas fa-book-open ${isActive ? 'text-indigo-500 text-lg' : 'text-gray-400 text-lg'}"></i>
+                <span class="truncate w-32">${notebook.name}</span>
+            </div>
+            <button class="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 transition-opacity p-1" onclick="event.stopPropagation(); window.app.deleteItem('${notebook.id}')">
+                <i class="fas fa-trash-alt text-xs"></i>
+            </button>
+        `;
+        el.onclick = () => onNotebookClick(notebook.id);
+        container.appendChild(el);
+    });
+}
+
+function renderSources(sources, containerId, activeSourceIds, onToggleSource, onDeleteSource) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+
+    if (sources.length === 0) {
+        container.innerHTML = `
+            <div class="text-center text-gray-400 text-sm mt-10">
+                <i class="fas fa-inbox text-3xl mb-2 opacity-50"></i>
+                <p>尚無來源資料</p>
+                <p class="text-xs mt-1">點擊上方 + 號上傳文件</p>
+            </div>`;
+        return;
+    }
+
+    container.innerHTML = '';
+
+    sources.forEach(source => {
+        const isActive = activeSourceIds.includes(source.id);
+        const el = document.createElement('div');
+        el.className = 'group relative';
+
+        el.innerHTML = `
+            <label class="flex items-start gap-3 p-4 rounded-2xl border cursor-pointer transition-all shadow-sm hover:shadow-md ${isActive ? 'border-indigo-400 bg-white/80' : 'border-white/60 bg-white/40 hover:bg-white/60 hover:border-indigo-200'}">
+                <div class="mt-1 relative flex items-center justify-center">
+                    <input type="checkbox" class="peer sr-only" ${isActive ? 'checked' : ''} value="${source.id}">
+                    <div class="w-5 h-5 border-2 rounded-md text-indigo-600 border-gray-300 peer-checked:border-indigo-500 peer-checked:bg-indigo-500 flex items-center justify-center transition-colors shadow-sm">
+                        <i class="fas fa-check text-white text-xs opacity-0 peer-checked:opacity-100"></i>
+                    </div>
+                </div>
+                <div class="flex-1 overflow-hidden">
+                    <div class="font-medium text-gray-800 text-sm truncate">${source.name}</div>
+                    <div class="text-xs text-gray-500 mt-1 line-clamp-2">${source.summary.substring(0, 60)}...</div>
+                </div>
+            </label>
+            <button class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 w-6 h-6 rounded-md bg-white border border-gray-200 text-gray-400 hover:text-red-500 hover:border-red-200 flex items-center justify-center transition-all shadow-sm z-10" title="刪除來源" onclick="event.preventDefault(); window.app.deleteSource('${source.id}')">
+                <i class="fas fa-trash-alt text-[10px]"></i>
+            </button>
+        `;
+
+        const checkbox = el.querySelector('input');
+        checkbox.addEventListener('change', (e) => onToggleSource(source.id, e.target.checked));
+
+        container.appendChild(el);
+    });
+}
+
+function renderChatMessages(messages, containerId) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+
+    if (messages.length === 0) {
+        container.innerHTML = `
+            <div class="flex items-center justify-center h-full opacity-50">
+                <div class="text-center">
+                    <i class="fas fa-sparkles text-4xl text-indigo-300 mb-3"></i>
+                    <p class="text-gray-500">選擇來源並開始對話</p>
+                </div>
+            </div>`;
+        return;
+    }
+
+    container.innerHTML = '';
+
+    messages.forEach(msg => {
+        const isUser = msg.role === 'user';
+        const el = document.createElement('div');
+        el.className = `flex chat-message w-full ${isUser ? 'justify-end' : 'justify-start'} mb-6`;
+
+        // Use marked to parse markdown if it's from AI
+        let contentHtml = msg.content;
+        if (!isUser) {
+             contentHtml = `<div class="markdown-body">${marked.parse(msg.content)}</div>`;
+        }
+
+        const sourceTagsHtml = (msg.sources && msg.sources.length > 0)
+            ? `<div class="flex flex-wrap gap-1 mt-3 pt-3 border-t border-black/5">
+                ${msg.sources.map(s => `<span class="px-2 py-0.5 bg-black/5 rounded text-[10px] text-gray-500 flex items-center gap-1"><i class="fas fa-paperclip"></i> ${s.name}</span>`).join('')}
+               </div>`
+            : '';
+
+        el.innerHTML = `
+            <div class="flex max-w-[85%] ${isUser ? 'flex-row-reverse' : 'flex-row'} items-end gap-3">
+                <div class="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center text-lg shadow-md ${isUser ? 'bg-gradient-to-br from-indigo-500 to-purple-600 text-white' : 'bg-gradient-to-br from-white to-gray-50 border border-gray-200 text-indigo-600'}">
+                    <i class="fas ${isUser ? 'fa-user' : 'fa-robot'}"></i>
+                </div>
+                <div class="p-5 rounded-[2rem] shadow-md border ${isUser ? 'bg-indigo-600 text-white rounded-br-xl border-indigo-700' : 'bg-white/80 backdrop-blur-md border-white/60 text-gray-800 rounded-bl-xl'}">
+                    <div class="${isUser ? 'whitespace-pre-wrap' : ''}">
+                        ${contentHtml}
+                    </div>
+                    ${sourceTagsHtml}
+                </div>
+            </div>
+        `;
+
+        container.appendChild(el);
+    });
+
+    // Scroll to bottom
+    container.scrollTop = container.scrollHeight;
+}
+
+function renderModelOptions(selectElementId, models, selectedModelId = null) {
+    const select = document.getElementById(selectElementId);
+    if (!select) return;
+
+    select.innerHTML = '';
+
+    if (models.length === 0) {
+        select.innerHTML = '<option value="">無可用模型</option>';
+        return;
+    }
+
+    models.forEach(model => {
+        const option = document.createElement('option');
+        option.value = model.id;
+        option.textContent = model.name;
+        if (model.id === selectedModelId) {
+            option.selected = true;
+        }
+        select.appendChild(option);
+    });
+}
+// js/lab.js
+
+// Keep track of the current active audio/speech utterance to allow cancellation
+let currentSpeech = null;
+
+window.openLabModal = function(type, appInstance) {
+    const modal = document.getElementById('labModal');
+    const header = document.getElementById('labModalHeader');
+    const title = document.getElementById('labModalTitle');
+    const body = document.getElementById('labModalBody');
+    const generateBtn = document.getElementById('generateLabBtn');
+    const cancelBtn = document.getElementById('cancelLabBtn');
+    const closeBtn = document.getElementById('closeLabModalBtn');
+
+    modal.classList.remove('hidden');
+
+    let configHtml = '';
+
+    // Base configuration fields for all types
+    const baseConfig = `
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">語言</label>
+            <select id="labLang" class="w-full p-3 rounded-xl border border-gray-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none">
+                <option value="zh-TW">繁體中文</option>
+                <option value="en">English</option>
+                <option value="ja">日本語</option>
+            </select>
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">自訂提示詞 (可選)</label>
+            <textarea id="labPrompt" rows="2" class="w-full p-3 rounded-xl border border-gray-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none resize-none" placeholder="例如：請用小學生的語氣解釋..."></textarea>
+        </div>
+    `;
+
+    // Type specific configs
+    if (type === 'video') {
+        title.innerHTML = '<i class="fas fa-film text-amber-500"></i> 影片解說設定';
+        configHtml = baseConfig + `
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">時長/字數長度</label>
+                <select id="labLength" class="w-full p-3 rounded-xl border border-gray-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none">
+                    <option value="short">短 (約1分鐘)</option>
+                    <option value="medium" selected>中 (約3分鐘)</option>
+                    <option value="long">長 (約5分鐘)</option>
+                </select>
+            </div>
+        `;
+    } else if (type === 'podcast') {
+        title.innerHTML = '<i class="fas fa-podcast text-blue-500"></i> 播客設定';
+        configHtml = baseConfig + `
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">時長</label>
+                <select id="labLength" class="w-full p-3 rounded-xl border border-gray-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none">
+                    <option value="short">短 (約2分鐘)</option>
+                    <option value="medium" selected>中 (約5分鐘)</option>
+                </select>
+            </div>
+        `;
+    } else if (type === 'mindmap') {
+        title.innerHTML = '<i class="fas fa-project-diagram text-emerald-500"></i> 心智圖設定';
+        configHtml = baseConfig + `
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">詳細程度</label>
+                <select id="labDetail" class="w-full p-3 rounded-xl border border-gray-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none">
+                    <option value="simple">簡單大綱</option>
+                    <option value="detailed" selected>詳細分支</option>
+                </select>
+            </div>
+        `;
+    } else if (type === 'presentation') {
+        title.innerHTML = '<i class="fas fa-desktop text-purple-500"></i> 簡報設定';
+        configHtml = baseConfig + `
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">頁面數量</label>
+                <input type="number" id="labPages" min="3" max="20" value="5" class="w-full p-3 rounded-xl border border-gray-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none">
+            </div>
+        `;
+    } else if (type === 'quiz') {
+        title.innerHTML = '<i class="fas fa-question-circle text-rose-500"></i> 測驗設定';
+        configHtml = baseConfig + `
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">題目數量</label>
+                <input type="number" id="labQuestions" min="1" max="20" value="5" class="w-full p-3 rounded-xl border border-gray-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none">
+            </div>
+        `;
+    }
+
+    body.innerHTML = configHtml;
+
+    // Reset handlers to prevent duplicates
+    const newGenerateBtn = generateBtn.cloneNode(true);
+    generateBtn.parentNode.replaceChild(newGenerateBtn, generateBtn);
+    const newCancelBtn = cancelBtn.cloneNode(true);
+    cancelBtn.parentNode.replaceChild(newCancelBtn, cancelBtn);
+    const newCloseBtn = closeBtn.cloneNode(true);
+    closeBtn.parentNode.replaceChild(newCloseBtn, closeBtn);
+
+    const closeModal = () => modal.classList.add('hidden');
+    newCancelBtn.onclick = closeModal;
+    newCloseBtn.onclick = closeModal;
+
+    newGenerateBtn.onclick = async () => {
+        closeModal();
+        appInstance.showLoading(`正在產生${type === 'video' ? '影片解說' : type === 'podcast' ? '播客' : type === 'mindmap' ? '心智圖' : type === 'presentation' ? '簡報' : '測驗'}...`);
+
+        try {
+            await handleLabGeneration(type, appInstance);
+        } catch (error) {
+            console.error("Lab Generation Error:", error);
+            alert("產生失敗: " + error.message);
+        } finally {
+            appInstance.hideLoading();
+        }
+    };
+};
+
+async function handleLabGeneration(type, app) {
+    const lang = document.getElementById('labLang').value;
+    const prompt = document.getElementById('labPrompt').value;
+
+    // Gather source contexts
+    const activeSourcesData = app.sources.filter(s => app.activeSourceIds.includes(s.id));
+    let contextText = "【來源資料】\n";
+    activeSourcesData.forEach(s => {
+        contextText += `--- 檔案：${s.name} ---
+${s.summary}
+
+`;
+    });
+
+    let systemInstruction = "";
+    let userPrompt = contextText + "\n\n";
+
+    if (type === 'video') {
+        const length = document.getElementById('labLength').value;
+        systemInstruction = "你是一個專業的影片腳本編輯與前端開發者。請根據提供的來源資料，產生一個可以用來當作「影片解說」的 HTML 結構，以及對應的「旁白文字」。";
+        userPrompt += `
+            語言: ${lang}
+            長度: ${length}
+            自訂要求: ${prompt}
+
+            請嚴格輸出一個 JSON 格式，包含兩個陣列：
+            1. 'slides': 每個物件包含 'html' (該畫面的 HTML 設計，請使用 Tailwind CSS class，確保畫面美觀圓滑，背景要有淺淺好看的顏色) 和 'narration' (該畫面要唸出來的旁白文字)。
+            注意：HTML 應該是可以直接放在一個 container 裡的內容，不需要 <html> 或 <body> 標籤。
+
+            格式範例:
+            {
+              "slides": [
+                {
+                  "html": "<div class='bg-blue-50 p-8 rounded-3xl text-center'><h1 class='text-4xl font-bold text-blue-800'>標題</h1></div>",
+                  "narration": "大家好，今天我們要來解說這個主題..."
+                }
+              ]
+            }
+            只輸出 JSON，不要包含其他 markdown 標記。
+        `;
+
+        const response = await generateCompletion(app.settings.provider, app.settings.apiKey, app.settings.model, [{role: 'user', content: userPrompt}], systemInstruction);
+        const data = parseJsonSafely(response);
+        renderVideoExplanation(data);
+
+    } else if (type === 'podcast') {
+        const length = document.getElementById('labLength').value;
+        systemInstruction = "你是一個專業的 Podcast 製作人。請根據來源資料，編寫一段兩人的對話腳本（主持人 Host 與來賓 Guest）。";
+        userPrompt += `
+            語言: ${lang}
+            長度: ${length}
+            自訂要求: ${prompt}
+
+            請輸出一個 JSON 陣列，每個物件代表一句台詞，包含 'speaker' ('host' 或 'guest') 和 'text' (要唸的文字)。
+
+            格式範例:
+            [
+              {"speaker": "host", "text": "歡迎收聽今天的節目！"},
+              {"speaker": "guest", "text": "大家好，很高興來到這裡。"}
+            ]
+            只輸出 JSON。
+        `;
+
+        const response = await generateCompletion(app.settings.provider, app.settings.apiKey, app.settings.model, [{role: 'user', content: userPrompt}], systemInstruction);
+        const data = parseJsonSafely(response);
+        renderPodcast(data);
+
+    } else if (type === 'mindmap') {
+        const detail = document.getElementById('labDetail').value;
+        systemInstruction = "你是一個整理大師。請將來源資料轉換為 Mermaid.js 的 mindmap 語法。";
+        userPrompt += `
+            語言: ${lang}
+            詳細程度: ${detail === 'detailed' ? '詳細，包含多個層級與分支' : '簡單，只需主要概念'}
+            自訂要求: ${prompt}
+
+            請嚴格輸出 Mermaid 的 mindmap 語法，不要使用任何 markdown code block (不要有 \`\`\`mermaid)。
+            語法開頭必須是 mindmap。
+            請確保語法正確，避免特殊字元破壞解析。
+        `;
+
+        const response = await generateCompletion(app.settings.provider, app.settings.apiKey, app.settings.model, [{role: 'user', content: userPrompt}], systemInstruction);
+        const cleanMermaid = response.replace(/```mermaid/gi, '').replace(/```/g, '').trim();
+        renderMindmap(cleanMermaid);
+
+    } else if (type === 'presentation') {
+        const pages = document.getElementById('labPages').value;
+        systemInstruction = "你是一個專業的簡報設計師。請根據來源資料，製作一份簡報。";
+        userPrompt += `
+            語言: ${lang}
+            頁面數量: 約 ${pages} 頁
+            自訂要求: ${prompt}
+
+            請輸出一個 JSON 陣列，每個物件代表一頁簡報，包含 'html' 欄位。
+            'html' 的內容應該是使用 Tailwind CSS 設計的精美簡報單頁。
+            風格需保持一致，背景淺色柔和，圓角設計。適當地在適合的地方加入一些 FontAwesome 圖標 (<i class="fas fa-..."></i>) 作為插圖點綴。
+            不需包含 <html> <body> 標籤，只需一個滿版的 div 作為容器。
+
+            格式範例:
+            [
+              {"html": "<div class='flex flex-col items-center justify-center h-full bg-indigo-50'><i class='fas fa-rocket text-6xl text-indigo-500 mb-4'></i><h1 class='text-5xl font-bold text-gray-800'>標題</h1></div>"}
+            ]
+        `;
+
+        const response = await generateCompletion(app.settings.provider, app.settings.apiKey, app.settings.model, [{role: 'user', content: userPrompt}], systemInstruction);
+        const data = parseJsonSafely(response);
+        renderPresentation(data);
+
+    } else if (type === 'quiz') {
+        const qCount = document.getElementById('labQuestions').value;
+        systemInstruction = "你是一個出題老師。請根據來源資料出題。";
+        userPrompt += `
+            語言: ${lang}
+            題目數量: ${qCount} 題
+            自訂要求: ${prompt}
+
+            請輸出一個 JSON 陣列，產生單選題。
+            格式要求:
+            [
+              {
+                "question": "題目內容？",
+                "options": ["選項A", "選項B", "選項C", "選項D"],
+                "answerIndex": 0, // 正確選項的索引 (0-3)
+                "explanation": "因為..."
+              }
+            ]
+        `;
+
+        const response = await generateCompletion(app.settings.provider, app.settings.apiKey, app.settings.model, [{role: 'user', content: userPrompt}], systemInstruction);
+        const data = parseJsonSafely(response);
+        renderQuiz(data);
+    }
+}
+
+function parseJsonSafely(text) {
+    try {
+        // Remove markdown code blocks if present
+        let cleaned = text.replace(/```json/g, '').replace(/```/g, '').trim();
+        return JSON.parse(cleaned);
+    } catch (e) {
+        console.error("JSON parse error on string:", text);
+        throw new Error("AI 回傳的格式不正確，無法解析。");
+    }
+}
+
+// --- Player & TTS Utilities ---
+
+function stopTTS() {
+    if (window.speechSynthesis) {
+        window.speechSynthesis.cancel();
+    }
+}
+
+function speakText(text, lang = 'zh-TW', voiceType = 'default') {
+    return new Promise((resolve) => {
+        if (!window.speechSynthesis) {
+            console.warn("Browser does not support TTS");
+            resolve();
+            return;
+        }
+
+        stopTTS();
+
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = lang;
+
+        // Simple voice differentiation hack
+        const voices = window.speechSynthesis.getVoices();
+        if (voices.length > 0) {
+            let selectedVoice;
+            const langVoices = voices.filter(v => v.lang.includes(lang.split('-')[0]));
+
+            if (langVoices.length > 1) {
+                if (voiceType === 'guest') {
+                    // Try to pick a different voice for guest
+                    selectedVoice = langVoices[1];
+                } else {
+                    selectedVoice = langVoices[0];
+                }
+            } else {
+                selectedVoice = langVoices[0] || voices[0];
+            }
+            if (selectedVoice) {
+                utterance.voice = selectedVoice;
+            }
+        }
+
+        utterance.onend = () => resolve();
+        utterance.onerror = (e) => {
+            console.error("TTS Error", e);
+            resolve();
+        };
+
+        window.speechSynthesis.speak(utterance);
+    });
+}
+
+// Ensure voices are loaded
+if (window.speechSynthesis) {
+    window.speechSynthesis.onvoiceschanged = () => {
+        window.speechSynthesis.getVoices();
+    };
+}
+
+
+// --- Rendering Functions ---
+
+function openResultOverlay(title) {
+    stopTTS(); // Stop any ongoing speech
+    document.getElementById('labResultTitle').textContent = title;
+    document.getElementById('labResultOverlay').classList.remove('hidden');
+
+    document.getElementById('closeLabResultBtn').onclick = () => {
+        stopTTS();
+        document.getElementById('labResultOverlay').classList.add('hidden');
+        document.getElementById('labResultContent').innerHTML = '';
+    };
+}
+
+function renderVideoExplanation(data) {
+    openResultOverlay('影片解說');
+    const container = document.getElementById('labResultContent');
+
+    container.innerHTML = `
+        <div class="max-w-4xl mx-auto flex flex-col h-full items-center justify-center">
+            <div id="videoDisplay" class="w-full aspect-video bg-white shadow-2xl rounded-3xl overflow-hidden border border-gray-200 transition-all duration-500 flex items-center justify-center p-8 relative">
+                <div class="text-center text-gray-400">
+                    <i class="fas fa-play-circle text-6xl mb-4 hover:text-indigo-500 cursor-pointer transition-colors" id="startVideoBtn"></i>
+                    <p>點擊開始播放</p>
+                </div>
+            </div>
+            <div class="mt-8 text-center" id="subtitleContainer">
+                <p class="text-xl font-medium text-gray-700 bg-white/80 px-6 py-3 rounded-2xl shadow-sm inline-block min-h-[3rem]"></p>
+            </div>
+        </div>
+    `;
+
+    const display = document.getElementById('videoDisplay');
+    const subtitle = container.querySelector('#subtitleContainer p');
+    const startBtn = document.getElementById('startVideoBtn');
+
+    if (startBtn) {
+        startBtn.onclick = async () => {
+            if (!data || !data.slides || data.slides.length === 0) return;
+
+            for (let i = 0; i < data.slides.length; i++) {
+                const slide = data.slides[i];
+
+                // Fade out/in effect
+                display.style.opacity = '0';
+                await new Promise(r => setTimeout(r, 300));
+
+                display.innerHTML = slide.html;
+                subtitle.textContent = slide.narration;
+
+                display.style.opacity = '1';
+
+                await speakText(slide.narration);
+                await new Promise(r => setTimeout(r, 500)); // Pause between slides
+            }
+
+            subtitle.textContent = "播放完畢";
+        };
+    }
+}
+
+function renderPodcast(data) {
+    openResultOverlay('播客');
+    const container = document.getElementById('labResultContent');
+
+    container.innerHTML = `
+        <div class="max-w-2xl mx-auto bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-100 flex flex-col h-[80vh]">
+            <div class="p-8 bg-gradient-to-r from-blue-600 to-indigo-600 text-white flex justify-between items-center">
+                <div class="flex items-center gap-4">
+                    <div class="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-sm">
+                        <i class="fas fa-podcast text-3xl"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-2xl font-bold">AI 播客</h2>
+                        <p class="text-blue-100 text-sm">基於您的筆記本生成</p>
+                    </div>
+                </div>
+                <button id="startPodcastBtn" class="w-14 h-14 bg-white text-blue-600 rounded-full flex items-center justify-center hover:scale-105 transition-transform shadow-lg">
+                    <i class="fas fa-play text-xl ml-1"></i>
+                </button>
+            </div>
+
+            <div class="flex-1 overflow-y-auto p-6 space-y-4" id="podcastTranscript">
+                <!-- Transcript injected here -->
+            </div>
+        </div>
+    `;
+
+    const transcriptDiv = document.getElementById('podcastTranscript');
+
+    // Render lines statically first
+    data.forEach((line, index) => {
+        const isHost = line.speaker === 'host';
+        const el = document.createElement('div');
+        el.className = `flex w-full ${isHost ? 'justify-start' : 'justify-end'} opacity-50 transition-opacity duration-300`;
+        el.id = `podcast-line-${index}`;
+
+        el.innerHTML = `
+            <div class="max-w-[80%] flex ${isHost ? 'flex-row' : 'flex-row-reverse'} gap-3 items-end">
+                <div class="w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center text-xs text-white ${isHost ? 'bg-blue-500' : 'bg-indigo-500'}">
+                    <i class="fas ${isHost ? 'fa-microphone' : 'fa-user'}"></i>
+                </div>
+                <div class="p-4 rounded-2xl ${isHost ? 'bg-gray-100 text-gray-800 rounded-bl-sm' : 'bg-indigo-50 text-indigo-900 border border-indigo-100 rounded-br-sm'}">
+                    <div class="text-xs font-bold mb-1 opacity-50">${isHost ? '主持人' : '來賓'}</div>
+                    <p>${line.text}</p>
+                </div>
+            </div>
+        `;
+        transcriptDiv.appendChild(el);
+    });
+
+    const startBtn = document.getElementById('startPodcastBtn');
+    let isPlaying = false;
+
+    startBtn.onclick = async () => {
+        if (isPlaying) {
+            stopTTS();
+            isPlaying = false;
+            startBtn.innerHTML = '<i class="fas fa-play text-xl ml-1"></i>';
+            return;
+        }
+
+        isPlaying = true;
+        startBtn.innerHTML = '<i class="fas fa-stop text-xl"></i>';
+
+        for (let i = 0; i < data.length; i++) {
+            if (!isPlaying) break; // Check if stopped
+
+            const line = data[i];
+            const lineEl = document.getElementById(`podcast-line-${i}`);
+
+            // Highlight current line
+            document.querySelectorAll('#podcastTranscript > div').forEach(el => el.classList.remove('opacity-100', 'scale-105'));
+            document.querySelectorAll('#podcastTranscript > div').forEach(el => el.classList.add('opacity-50'));
+
+            lineEl.classList.remove('opacity-50');
+            lineEl.classList.add('opacity-100');
+            lineEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+            await speakText(line.text, 'zh-TW', line.speaker);
+        }
+
+        isPlaying = false;
+        startBtn.innerHTML = '<i class="fas fa-play text-xl ml-1"></i>';
+    };
+}
+
+async function renderMindmap(mermaidSyntax) {
+    openResultOverlay('心智圖');
+    const container = document.getElementById('labResultContent');
+
+    container.innerHTML = `
+        <div class="w-full h-full bg-white rounded-3xl shadow-xl border border-gray-100 p-8 overflow-auto flex items-center justify-center">
+            <div class="mermaid w-full max-w-5xl" id="mermaidContainer">
+                ${mermaidSyntax}
+            </div>
+        </div>
+    `;
+
+    try {
+        mermaid.initialize({ startOnLoad: false, theme: 'base', themeVariables: { primaryColor: '#eef2ff', primaryTextColor: '#3730a3', primaryBorderColor: '#818cf8', lineColor: '#c7d2fe' } });
+        await mermaid.run({
+            nodes: [document.getElementById('mermaidContainer')]
+        });
+    } catch (e) {
+        console.error("Mermaid Render Error", e);
+        container.innerHTML = `<div class="text-red-500 p-8">無法渲染心智圖: 格式錯誤。請稍後重試或修改來源。</div>`;
+    }
+}
+
+function renderPresentation(data) {
+    openResultOverlay('簡報');
+    const container = document.getElementById('labResultContent');
+
+    if (!data || data.length === 0) {
+        container.innerHTML = `<div class="text-red-500 p-8">無效的簡報資料</div>`;
+        return;
+    }
+
+    let currentIndex = 0;
+
+    const renderSlide = () => {
+        container.innerHTML = `
+            <div class="max-w-5xl mx-auto flex flex-col h-full">
+                <div class="flex justify-between items-center mb-4">
+                    <span class="bg-indigo-100 text-indigo-800 text-sm font-medium px-4 py-1.5 rounded-full shadow-sm">
+                        Slide ${currentIndex + 1} / ${data.length}
+                    </span>
+                    <div class="flex gap-2">
+                        <button id="prevSlide" class="px-5 py-2 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors disabled:opacity-50" ${currentIndex === 0 ? 'disabled' : ''}>
+                            <i class="fas fa-chevron-left"></i> 上一頁
+                        </button>
+                        <button id="nextSlide" class="px-5 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors shadow-md disabled:opacity-50" ${currentIndex === data.length - 1 ? 'disabled' : ''}>
+                            下一頁 <i class="fas fa-chevron-right"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="flex-1 bg-white shadow-2xl rounded-3xl overflow-hidden border border-gray-200">
+                    ${data[currentIndex].html}
+                </div>
+            </div>
+        `;
+
+        const prevBtn = document.getElementById('prevSlide');
+        const nextBtn = document.getElementById('nextSlide');
+        if (prevBtn) prevBtn.onclick = () => { currentIndex--; renderSlide(); };
+        if (nextBtn) nextBtn.onclick = () => { currentIndex++; renderSlide(); };
+    };
+
+    renderSlide();
+}
+
+function renderQuiz(data) {
+    openResultOverlay('測驗');
+    const container = document.getElementById('labResultContent');
+
+    if (!data || data.length === 0) {
+        container.innerHTML = `<div class="text-red-500 p-8">無效的測驗資料</div>`;
+        return;
+    }
+
+    let html = '<div class="max-w-3xl mx-auto space-y-8 pb-12">';
+
+    data.forEach((q, idx) => {
+        html += `
+            <div class="bg-white p-8 rounded-3xl shadow-md border border-gray-100 quiz-card">
+                <h3 class="text-xl font-bold text-gray-800 mb-6 flex gap-3">
+                    <span class="w-8 h-8 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center flex-shrink-0 text-sm shadow-inner">${idx + 1}</span>
+                    <span>${q.question}</span>
+                </h3>
+                <div class="space-y-3 pl-11">
+        `;
+
+        q.options.forEach((opt, optIdx) => {
+            const id = `q-${idx}-opt-${optIdx}`;
+            html += `
+                <label class="flex items-center p-4 rounded-xl border-2 border-gray-100 cursor-pointer hover:bg-gray-50 transition-colors relative option-label">
+                    <input type="radio" name="q-${idx}" value="${optIdx}" class="w-5 h-5 text-indigo-600 focus:ring-indigo-500">
+                    <span class="ml-3 text-gray-700">${opt}</span>
+                    <i class="fas fa-check text-emerald-500 absolute right-4 opacity-0 answer-icon-correct text-xl"></i>
+                    <i class="fas fa-times text-rose-500 absolute right-4 opacity-0 answer-icon-wrong text-xl"></i>
+                </label>
+            `;
+        });
+
+        html += `
+                </div>
+                <div class="mt-6 pl-11 hidden explanation">
+                    <div class="p-4 bg-amber-50 border-l-4 border-amber-400 rounded-r-xl text-amber-800 text-sm">
+                        <strong>解析：</strong>${q.explanation}
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+
+    html += `
+        <div class="text-center mt-10">
+            <button id="submitQuizBtn" class="px-10 py-4 bg-indigo-600 text-white rounded-2xl font-bold text-lg hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-600/30 transform hover:-translate-y-1">
+                提交答案
+            </button>
+        </div>
+    </div>`;
+
+    container.innerHTML = html;
+
+    document.getElementById('submitQuizBtn').onclick = () => {
+        let score = 0;
+
+        data.forEach((q, idx) => {
+            const selected = document.querySelector(`input[name="q-${idx}"]:checked`);
+            const card = document.querySelectorAll('.quiz-card')[idx];
+            const labels = card.querySelectorAll('.option-label');
+            const expl = card.querySelector('.explanation');
+
+            // Disable all inputs
+            card.querySelectorAll('input').forEach(i => i.disabled = true);
+            expl.classList.remove('hidden');
+
+            const correctIdx = q.answerIndex;
+            labels[correctIdx].classList.add('border-emerald-500', 'bg-emerald-50');
+            labels[correctIdx].querySelector('.answer-icon-correct').classList.remove('opacity-0');
+
+            if (selected) {
+                const selectedIdx = parseInt(selected.value);
+                if (selectedIdx === correctIdx) {
+                    score++;
+                } else {
+                    labels[selectedIdx].classList.add('border-rose-500', 'bg-rose-50');
+                    labels[selectedIdx].querySelector('.answer-icon-wrong').classList.remove('opacity-0');
+                }
+            }
+        });
+
+        const btn = document.getElementById('submitQuizBtn');
+        btn.textContent = `得分: ${score} / ${data.length}`;
+        btn.classList.replace('bg-indigo-600', 'bg-emerald-500');
+        btn.classList.replace('hover:bg-indigo-700', 'hover:bg-emerald-600');
+        btn.classList.replace('shadow-indigo-600/30', 'shadow-emerald-500/30');
+        btn.disabled = true;
+    };
+}// js/app.js
+
+class App {
+    constructor() {
+        this.settings = {
+            isSetupComplete: false,
+            provider: null,
+            apiKey: null,
+            model: null,
+            language: 'zh-TW'
+        };
+        this.items = [];
+        this.currentNotebookId = null;
+        this.sources = [];
+        this.activeSourceIds = [];
+        this.messages = [];
+
+        // Expose to window for inline onclick handlers (temporary measure, better to use event delegation)
+        window.app = this;
+    }
+
+    async init() {
+        this.showLoading('初始化系統...');
+        try {
+            await initDB();
+            await this.loadSettings();
+
+            if (!this.settings.isSetupComplete) {
+                this.hideLoading();
+                this.startSetupFlow();
+            } else {
+                await this.loadWorkspace();
+                this.hideLoading();
+            }
+        } catch (error) {
+            console.error("Initialization error:", error);
+            alert("初始化失敗，請重新整理頁面。\n錯誤: " + error.message);
+            this.hideLoading();
+        }
+    }
+
+    // --- Loading UI ---
+    showLoading(text = '載入中...') {
+        document.getElementById('loadingText').textContent = text;
+        document.getElementById('loadingOverlay').classList.remove('hidden');
+    }
+
+    hideLoading() {
+        document.getElementById('loadingOverlay').classList.add('hidden');
+    }
+
+    // --- Settings Logic ---
+    async loadSettings() {
+        const keys = ['isSetupComplete', 'provider', 'apiKey', 'model', 'language'];
+        for (const key of keys) {
+            const val = await getSetting(key);
+            if (val !== null) this.settings[key] = val;
+        }
+    }
+
+    async updateSetting(key, value) {
+        this.settings[key] = value;
+        await saveSetting(key, value);
+    }
+
+    // --- Setup Flow ---
+    startSetupFlow() {
+        const modal = document.getElementById('setupModal');
+        modal.classList.remove('hidden');
+
+        let currentStep = 1;
+        let tempProvider = null;
+        let tempApiKey = null;
+        let availableModels = [];
+
+        const updateUI = () => {
+            // Update steps visibility
+            document.getElementById('setupStep1').classList.toggle('hidden', currentStep !== 1);
+            document.getElementById('setupStep2').classList.toggle('hidden', currentStep !== 2);
+            document.getElementById('setupStep3').classList.toggle('hidden', currentStep !== 3);
+
+            // Update indicators
+            const indicators = document.getElementById('setupStepIndicators').children;
+            for (let i = 0; i < 3; i++) {
+                indicators[i].className = `w-3 h-3 rounded-full ${i + 1 <= currentStep ? 'bg-indigo-600' : 'bg-gray-300'}`;
+            }
+
+            // Buttons
+            const prevBtn = document.getElementById('setupPrevBtn');
+            const nextBtn = document.getElementById('setupNextBtn');
+
+            prevBtn.classList.toggle('hidden', currentStep === 1);
+
+            if (currentStep === 1) {
+                nextBtn.textContent = '下一步';
+                nextBtn.disabled = !tempProvider;
+                renderProviderCards('providerCards', tempProvider, (id) => {
+                    tempProvider = id;
+                    updateUI(); // Re-render to show selection
+                });
+            } else if (currentStep === 2) {
+                nextBtn.textContent = '驗證並繼續';
+                nextBtn.disabled = false;
+            } else if (currentStep === 3) {
+                nextBtn.textContent = '完成設定';
+                nextBtn.disabled = availableModels.length === 0;
+            }
+        };
+
+        document.getElementById('setupPrevBtn').onclick = () => {
+            if (currentStep > 1) currentStep--;
+            updateUI();
+        };
+
+        document.getElementById('setupNextBtn').onclick = async () => {
+            if (currentStep === 1) {
+                currentStep++;
+                updateUI();
+            } else if (currentStep === 2) {
+                tempApiKey = document.getElementById('apiKeyInput').value.trim();
+                if (!tempApiKey) {
+                    alert('請輸入 API 金鑰');
+                    return;
+                }
+
+                this.showLoading('正在驗證金鑰並獲取模型...');
+                try {
+                    availableModels = await fetchModels(tempProvider, tempApiKey);
+                    renderModelOptions('modelSelect', availableModels);
+                    currentStep++;
+                    updateUI();
+                } catch (error) {
+                    alert('驗證失敗: ' + error.message);
+                } finally {
+                    this.hideLoading();
+                }
+            } else if (currentStep === 3) {
+                const selectedModel = document.getElementById('modelSelect').value;
+                if (!selectedModel) {
+                    alert('請選擇模型');
+                    return;
+                }
+
+                // Save settings
+                await this.updateSetting('provider', tempProvider);
+                await this.updateSetting('apiKey', tempApiKey);
+                await this.updateSetting('model', selectedModel);
+                await this.updateSetting('isSetupComplete', true);
+
+                modal.classList.add('hidden');
+
+                // Show a quick tour/welcome alert (simple implementation)
+                alert('設定完成！歡迎使用 Opensia。\n您可以在左側建立筆記本並上傳文件開始。');
+
+                await this.loadWorkspace();
+            }
+        };
+
+        updateUI();
+    }
+
+    // --- Settings Modal Logic ---
+    initSettingsModal() {
+        const modal = document.getElementById('settingsModal');
+        const openBtn = document.getElementById('openSettingsBtn');
+        const closeBtn = document.getElementById('closeSettingsBtn');
+        const saveBtn = document.getElementById('saveSettingsBtn');
+        const refreshBtn = document.getElementById('settingsRefreshModels');
+
+        const providerSelect = document.getElementById('settingsProvider');
+        const apiKeyInput = document.getElementById('settingsApiKey');
+        const modelSelect = document.getElementById('settingsModel');
+        const langSelect = document.getElementById('settingsLanguage');
+
+        const populateModal = async () => {
+            providerSelect.value = this.settings.provider || 'openai';
+            apiKeyInput.value = this.settings.apiKey || '';
+            langSelect.value = this.settings.language || 'zh-TW';
+
+            if (this.settings.provider && this.settings.apiKey) {
+                try {
+                    const models = await fetchModels(this.settings.provider, this.settings.apiKey);
+                    renderModelOptions('settingsModel', models, this.settings.model);
+                } catch (e) {
+                    renderModelOptions('settingsModel', []);
+                }
+            } else {
+                renderModelOptions('settingsModel', []);
+            }
+        };
+
+        openBtn.addEventListener('click', async () => {
+            await populateModal();
+            modal.classList.remove('hidden');
+        });
+
+        closeBtn.addEventListener('click', () => {
+            modal.classList.add('hidden');
+        });
+
+        refreshBtn.addEventListener('click', async () => {
+            const provider = providerSelect.value;
+            const key = apiKeyInput.value.trim();
+            if (!key) {
+                alert('請先輸入 API 金鑰');
+                return;
+            }
+
+            const btnIcon = refreshBtn.querySelector('i');
+            btnIcon.classList.add('fa-spin');
+
+            try {
+                const models = await fetchModels(provider, key);
+                renderModelOptions('settingsModel', models, this.settings.model);
+            } catch (e) {
+                alert('獲取模型失敗: ' + e.message);
+                renderModelOptions('settingsModel', []);
+            } finally {
+                btnIcon.classList.remove('fa-spin');
+            }
+        });
+
+        // Clear models if provider changes
+        providerSelect.addEventListener('change', () => {
+            renderModelOptions('settingsModel', []);
+        });
+
+        saveBtn.addEventListener('click', async () => {
+            const provider = providerSelect.value;
+            const key = apiKeyInput.value.trim();
+            const model = modelSelect.value;
+            const lang = langSelect.value;
+
+            if (!key || !model) {
+                alert('請確保 API 金鑰已輸入且已選擇模型');
+                return;
+            }
+
+            await this.updateSetting('provider', provider);
+            await this.updateSetting('apiKey', key);
+            await this.updateSetting('model', model);
+            await this.updateSetting('language', lang);
+
+            modal.classList.add('hidden');
+
+            // Re-initialize workspace if needed, though settings usually take effect on next generation
+            alert('設定已儲存');
+        });
+    }
+
+    async loadWorkspace() {
+        this.initSettingsModal();
+
+        // Load items from DB
+        this.items = await getItems() || [];
+        this.renderExplorer();
+
+        // Bind explorer buttons
+        document.getElementById('addFolderBtn').onclick = () => this.createNewItem('folder');
+        document.getElementById('addNotebookBtn').onclick = () => this.createNewItem('notebook');
+
+        // Bind file upload
+        document.getElementById('uploadSourceInput').onchange = (e) => this.handleFileUpload(e);
+
+        // Bind Chat
+        document.getElementById('sendChatBtn').onclick = () => this.handleChatSubmit();
+        document.getElementById('chatInput').onkeypress = (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                this.handleChatSubmit();
+            }
+        };
+
+        // Mobile sidebar toggle
+        document.getElementById('toggleSidebarBtn').onclick = () => {
+             const sidebar = document.getElementById('sidebar');
+             sidebar.classList.toggle('-translate-x-full');
+             sidebar.classList.toggle('absolute');
+             sidebar.classList.toggle('h-full');
+        };
+
+        // Bind Lab Buttons
+        document.querySelectorAll('.lab-btn').forEach(btn => {
+            btn.onclick = () => {
+                if (this.activeSourceIds.length === 0) {
+                    alert('請至少選擇一個來源資料');
+                    return;
+                }
+                const type = btn.dataset.type;
+                window.openLabModal(type, this);
+            };
+        });
+    }
+
+    // --- File Explorer Logic ---
+
+    async createNewItem(type) {
+        const defaultName = type === 'folder' ? '新資料夾' : '新筆記本';
+        const name = prompt(`請輸入${type === 'folder' ? '資料夾' : '筆記本'}名稱:`, defaultName);
+        if (!name) return;
+
+        const newItem = {
+            id: Date.now().toString(),
+            type: type,
+            name: name,
+            parentId: null, // Flat structure for now
+            createdAt: Date.now()
+        };
+
+        await addItem(newItem);
+        this.items.push(newItem);
+        this.renderExplorer();
+
+        if (type === 'notebook') {
+            await this.selectNotebook(newItem.id);
+        }
+    }
+
+    async deleteItem(id) {
+        if (!confirm('確定要刪除嗎？')) return;
+
+        await deleteItem(id);
+        this.items = this.items.filter(i => i.id !== id);
+
+        if (this.currentNotebookId === id) {
+            this.currentNotebookId = null;
+            this.updateWorkspaceVisibility();
+        }
+
+        this.renderExplorer();
+    }
+
+    renderExplorer() {
+        renderExplorerItems(
+            this.items,
+            'fileExplorer',
+            this.currentNotebookId,
+            (id) => console.log('Folder clicked', id), // Implement expand/collapse if needed
+            (id) => this.selectNotebook(id)
+        );
+    }
+
+    // --- Notebook Workspace Logic ---
+
+    async selectNotebook(id) {
+        this.currentNotebookId = id;
+        this.activeSourceIds = []; // Reset active sources on switch
+
+        const notebook = this.items.find(i => i.id === id);
+        if (notebook) {
+            document.getElementById('currentNotebookTitle').textContent = notebook.name;
+        }
+
+        this.updateWorkspaceVisibility();
+
+        // Load sources and messages for this notebook
+        this.sources = await getSourcesByNotebook(id) || [];
+        this.messages = await getMessagesByNotebook(id) || [];
+
+        this.renderSourcesList();
+        this.renderChat();
+        this.renderExplorer(); // update active state in UI
+    }
+
+    updateWorkspaceVisibility() {
+        const hasNotebook = !!this.currentNotebookId;
+        document.getElementById('mainWorkspace').classList.toggle('hidden', !hasNotebook);
+        document.getElementById('emptyWorkspace').classList.toggle('hidden', hasNotebook);
+    }
+
+    // --- Sources Logic ---
+
+    async handleFileUpload(event) {
+        if (!this.currentNotebookId) return;
+
+        const files = event.target.files;
+        if (!files || files.length === 0) return;
+
+        this.showLoading('正在處理文件與使用 AI 擷取內容，這可能需要一些時間...');
+
+        try {
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                let extractedText = '';
+
+                // Simple text extraction based on file type
+                if (file.type === 'text/plain' || file.name.endsWith('.md')) {
+                    extractedText = await file.text();
+                } else if (file.type === 'application/pdf') {
+                    // Note: Needs pdf.js integrated properly. For this demo context,
+                    // if pdf.js is not fully set up to read text, we simulate it or use a basic fallback.
+                    // Assuming pdf.js is loaded globally via CDN in a real app.
+                    extractedText = await this.extractPdfText(file);
+                } else {
+                    alert(`不支援的檔案格式: ${file.name}`);
+                    continue;
+                }
+
+                if (!extractedText) continue;
+
+                // Send to AI for formatting/summarization as requested
+                document.getElementById('loadingText').textContent = `AI 正在整理 ${file.name}...`;
+
+                const summaryText = await summarizeDocument(
+                    this.settings.provider,
+                    this.settings.apiKey,
+                    this.settings.model,
+                    extractedText,
+                    file.name
+                );
+
+                const newSource = {
+                    id: Date.now().toString() + Math.random().toString(36).substr(2, 5),
+                    notebookId: this.currentNotebookId,
+                    name: file.name,
+                    summary: summaryText, // Storing only the formatted text
+                    createdAt: Date.now()
+                };
+
+                await addSource(newSource);
+                this.sources.push(newSource);
+                // Auto-select new source
+                this.activeSourceIds.push(newSource.id);
+            }
+
+            this.renderSourcesList();
+        } catch (error) {
+            console.error("Upload error:", error);
+            alert("處理文件時發生錯誤: " + error.message);
+        } finally {
+            this.hideLoading();
+            event.target.value = ''; // Reset input
+        }
+    }
+
+    async extractPdfText(file) {
+        // A placeholder for actual PDF text extraction using pdf.js
+        // For the sake of this implementation, we will mock it if pdfjsLib is not available
+        if (typeof pdfjsLib !== 'undefined') {
+             try {
+                const arrayBuffer = await file.arrayBuffer();
+                const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
+                let fullText = '';
+                for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+                    const page = await pdf.getPage(pageNum);
+                    const textContent = await page.getTextContent();
+                    const pageText = textContent.items.map(item => item.str).join(' ');
+                    fullText += `[第${pageNum}頁]
+${pageText}
+
+`;
+                }
+                return fullText;
+             } catch(e) {
+                 console.error("PDF Extraction failed:", e);
+                 return `[模擬 PDF 內容] 檔名: ${file.name}\n這是一段無法正常解析的 PDF 內容。`;
+             }
+        } else {
+             return `[模擬 PDF 內容] 檔名: ${file.name}\n因為找不到 pdf.js，這是模擬的擷取文字。請確保頁面有載入 pdf.js。`;
+        }
+    }
+
+    async deleteSource(id) {
+        if (!confirm('確定要刪除此來源嗎？')) return;
+        await deleteSource(id);
+        this.sources = this.sources.filter(s => s.id !== id);
+        this.activeSourceIds = this.activeSourceIds.filter(activeId => activeId !== id);
+        this.renderSourcesList();
+    }
+
+    toggleActiveSource(id, isActive) {
+        if (isActive) {
+            if (!this.activeSourceIds.includes(id)) this.activeSourceIds.push(id);
+        } else {
+            this.activeSourceIds = this.activeSourceIds.filter(activeId => activeId !== id);
+        }
+        this.renderSourcesList(); // Re-render to update tags in chat
+    }
+
+    renderSourcesList() {
+        renderSources(
+            this.sources,
+            'sourcesList',
+            this.activeSourceIds,
+            (id, active) => this.toggleActiveSource(id, active),
+            (id) => this.deleteSource(id)
+        );
+        this.updateActiveSourcesIndicator();
+    }
+
+    updateActiveSourcesIndicator() {
+        const container = document.getElementById('activeSourcesIndicator');
+        container.innerHTML = '';
+
+        const activeSources = this.sources.filter(s => this.activeSourceIds.includes(s.id));
+        if (activeSources.length > 0) {
+            activeSources.forEach(s => {
+                const tag = document.createElement('span');
+                tag.className = 'px-2 py-1 bg-indigo-100 text-indigo-700 text-xs rounded-lg flex items-center gap-1 border border-indigo-200';
+                tag.innerHTML = `<i class="fas fa-paperclip"></i> <span class="truncate max-w-[100px]">${s.name}</span>`;
+                container.appendChild(tag);
+            });
+        }
+    }
+
+    // --- Chat Logic ---
+
+    async handleChatSubmit() {
+        const inputEl = document.getElementById('chatInput');
+        const text = inputEl.value.trim();
+        if (!text || !this.currentNotebookId) return;
+
+        const btnEl = document.getElementById('sendChatBtn');
+        btnEl.disabled = true;
+        inputEl.value = '';
+
+        // Get active sources content
+        const activeSourcesData = this.sources.filter(s => this.activeSourceIds.includes(s.id));
+
+        // 1. Save user message
+        const userMsg = {
+            id: Date.now().toString(),
+            notebookId: this.currentNotebookId,
+            role: 'user',
+            content: text,
+            timestamp: Date.now()
+        };
+        await addMessage(userMsg);
+        this.messages.push(userMsg);
+        this.renderChat();
+
+        // 2. Prepare context for AI
+        let systemPrompt = "你是一個有用的學習助手。請根據提供的「來源資料」來回答使用者的問題。如果來源資料中沒有相關資訊，請誠實告知。\n\n";
+        if (activeSourcesData.length > 0) {
+            systemPrompt += "【來源資料】\n";
+            activeSourcesData.forEach(s => {
+                systemPrompt += `--- 檔案：${s.name} ---
+${s.summary}
+
+`;
+            });
+        } else {
+            systemPrompt += "（使用者目前沒有選擇任何來源資料，請依一般常識回答）";
+        }
+
+        // Add a temporary loading message
+        const tempMsgId = 'temp_loading';
+        this.messages.push({ id: tempMsgId, role: 'assistant', content: '<i class="fas fa-circle-notch fa-spin"></i> 思考中...' });
+        this.renderChat();
+
+        // 3. Call AI
+        try {
+            // Prepare message history (last 10 messages for context)
+            const chatHistory = this.messages
+                .filter(m => m.id !== tempMsgId)
+                .slice(-10)
+                .map(m => ({ role: m.role, content: m.content }));
+
+            const responseContent = await generateCompletion(
+                this.settings.provider,
+                this.settings.apiKey,
+                this.settings.model,
+                chatHistory,
+                systemPrompt
+            );
+
+            // Remove temp msg
+            this.messages = this.messages.filter(m => m.id !== tempMsgId);
+
+            // 4. Save AI response
+            const aiMsg = {
+                id: Date.now().toString(),
+                notebookId: this.currentNotebookId,
+                role: 'assistant',
+                content: responseContent,
+                sources: activeSourcesData.map(s => ({ id: s.id, name: s.name })), // Attach source metadata
+                timestamp: Date.now()
+            };
+
+            await addMessage(aiMsg);
+            this.messages.push(aiMsg);
+
+        } catch (error) {
+            console.error("Chat error:", error);
+            this.messages = this.messages.filter(m => m.id !== tempMsgId);
+            alert("對話發生錯誤: " + error.message);
+        } finally {
+            btnEl.disabled = false;
+            this.renderChat();
+        }
+    }
+
+    renderChat() {
+        renderChatMessages(this.messages, 'chatHistory');
+    }
+}
+
+// Bootstrap
+document.addEventListener('DOMContentLoaded', () => {
+    const app = new App();
+    app.init();
+});</script>
+</body>
+</html>
